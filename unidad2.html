@@ -1,0 +1,1057 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StudyOS — ASIR Unidad 2 · ISO/ASO</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #080b12;
+    --surface: #0f1219;
+    --surface2: #161b26;
+    --surface3: #1e2535;
+    --border: #252d40;
+    --accent: #00e5ff;
+    --accent-dim: rgba(0,229,255,0.12);
+    --accent2: #a78bfa;
+    --accent3: #34d399;
+    --warn: #fb923c;
+    --danger: #f87171;
+    --success: #34d399;
+    --xp-color: #facc15;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --muted2: #94a3b8;
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'Syne', sans-serif;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: var(--sans); min-height: 100vh; overflow-x: hidden; }
+  body::after { content: ''; position: fixed; inset: 0; background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px); pointer-events: none; z-index: 9999; }
+  body::before { content: ''; position: fixed; inset: 0; background-image: linear-gradient(rgba(0,229,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0,229,255,0.03) 1px, transparent 1px); background-size: 40px 40px; pointer-events: none; }
+
+  header { padding: 14px 32px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; background: rgba(8,11,18,0.95); backdrop-filter: blur(12px); position: sticky; top: 0; z-index: 100; flex-wrap: wrap; gap: 10px; }
+  .logo { font-family: var(--mono); font-size: 18px; font-weight: 700; color: var(--accent); display: flex; align-items: center; gap: 10px; }
+  .logo-dot { width: 8px; height: 8px; background: var(--accent); border-radius: 50%; box-shadow: 0 0 10px var(--accent); animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.3} }
+  .unit-badge { font-family: var(--mono); font-size: 11px; color: var(--muted); background: var(--surface2); border: 1px solid var(--border); padding: 4px 10px; border-radius: 4px; letter-spacing: 1px; }
+
+  .xp-bar-wrap { display: flex; align-items: center; gap: 10px; }
+  .xp-label { font-family: var(--mono); font-size: 11px; color: var(--xp-color); font-weight: 700; letter-spacing: 1px; white-space: nowrap; }
+  .xp-track { width: 140px; height: 10px; background: var(--surface3); border-radius: 10px; overflow: hidden; border: 1px solid var(--border); }
+  .xp-fill { height: 100%; background: linear-gradient(90deg, var(--xp-color), #f97316); border-radius: 10px; transition: width 0.5s cubic-bezier(0.4,0,0.2,1); box-shadow: 0 0 8px rgba(250,204,21,0.5); }
+  .xp-count { font-family: var(--mono); font-size: 11px; color: var(--xp-color); }
+  .streak-badge { display: flex; align-items: center; gap: 4px; background: rgba(251,146,60,0.15); border: 1px solid rgba(251,146,60,0.3); border-radius: 20px; padding: 4px 10px; font-family: var(--mono); font-size: 12px; font-weight: 700; color: var(--warn); }
+
+  nav { display: flex; gap: 4px; padding: 16px 32px; border-bottom: 1px solid var(--border); background: var(--surface); flex-wrap: wrap; }
+  .nav-btn { font-family: var(--mono); font-size: 12px; font-weight: 600; padding: 8px 18px; border-radius: 6px; border: 1px solid transparent; cursor: pointer; background: transparent; color: var(--muted); letter-spacing: 0.5px; transition: all 0.2s; }
+  .nav-btn:hover { color: var(--text); background: var(--surface2); }
+  .nav-btn.active { color: var(--accent); background: var(--accent-dim); border-color: rgba(0,229,255,0.3); }
+
+  main { max-width: 900px; margin: 0 auto; padding: 40px 24px; }
+  .view { display: none; animation: fadeIn 0.3s ease; }
+  .view.active { display: block; }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)} }
+  .section-title { font-size: 28px; font-weight: 800; margin-bottom: 8px; letter-spacing: -0.5px; }
+  .section-sub { font-family: var(--mono); font-size: 12px; color: var(--muted); margin-bottom: 32px; letter-spacing: 0.5px; }
+
+  .mascot-wrap { display: flex; align-items: flex-end; gap: 20px; margin-bottom: 28px; }
+  .mascot { font-size: 52px; animation: mascot-idle 3s ease-in-out infinite; cursor: pointer; filter: drop-shadow(0 0 12px rgba(0,229,255,0.3)); user-select: none; transition: transform 0.1s; flex-shrink: 0; }
+  .mascot:active { transform: scale(0.9); }
+  @keyframes mascot-idle { 0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-6px) rotate(2deg)} }
+  .mascot.happy { animation: mascot-happy 0.5s ease; }
+  @keyframes mascot-happy { 0%{transform:scale(1)}25%{transform:scale(1.3) rotate(-10deg)}50%{transform:scale(1.2) rotate(10deg)}75%{transform:scale(1.1) rotate(-5deg)}100%{transform:scale(1)} }
+  .mascot.sad { animation: mascot-sad 0.5s ease; }
+  @keyframes mascot-sad { 0%{transform:translateX(0)}25%{transform:translateX(-8px)}50%{transform:translateX(8px)}75%{transform:translateX(-4px)}100%{transform:translateX(0)} }
+  .mascot-bubble { background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; border-bottom-left-radius: 3px; padding: 12px 16px; font-size: 14px; color: var(--muted2); line-height: 1.5; max-width: 480px; position: relative; transition: all 0.3s; }
+  .mascot-bubble::before { content: ''; position: absolute; left: -8px; bottom: 10px; border: 6px solid transparent; border-right-color: var(--border); }
+  .mascot-bubble::after { content: ''; position: absolute; left: -6px; bottom: 11px; border: 5px solid transparent; border-right-color: var(--surface2); }
+  .mascot-name { font-family: var(--mono); font-size: 10px; color: var(--accent); letter-spacing: 1px; margin-bottom: 4px; font-weight: 700; }
+
+  .lives-wrap { display: flex; align-items: center; gap: 6px; margin-bottom: 20px; }
+  .heart { font-size: 20px; transition: all 0.3s; }
+  .heart.lost { filter: grayscale(1); opacity: 0.3; animation: heart-lost 0.4s ease; }
+  @keyframes heart-lost { 0%{transform:scale(1)}50%{transform:scale(0.5) rotate(20deg)}100%{transform:scale(1)} }
+  .lives-label { font-family: var(--mono); font-size: 11px; color: var(--muted); margin-left: 4px; }
+
+  .flashcard-controls { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+  .progress-text { font-family: var(--mono); font-size: 13px; color: var(--muted2); }
+  .progress-bar { width: 200px; height: 6px; background: var(--surface3); border-radius: 3px; overflow: hidden; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 3px; transition: width 0.4s ease; box-shadow: 0 0 8px var(--accent); }
+  .card-scene { perspective: 1200px; height: 300px; margin-bottom: 24px; cursor: pointer; }
+  .card-inner { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; transition: transform 0.5s cubic-bezier(0.4,0,0.2,1); }
+  .card-scene.flipped .card-inner { transform: rotateY(180deg); }
+  .card-face { position: absolute; inset: 0; backface-visibility: hidden; border-radius: 16px; border: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px; text-align: center; }
+  .card-front { background: var(--surface); background-image: radial-gradient(circle at 30% 20%, rgba(0,229,255,0.05) 0%, transparent 60%); }
+  .card-back { background: var(--surface2); background-image: radial-gradient(circle at 70% 80%, rgba(167,139,250,0.08) 0%, transparent 60%); transform: rotateY(180deg); }
+  .card-label { font-family: var(--mono); font-size: 10px; letter-spacing: 2px; color: var(--muted); margin-bottom: 16px; text-transform: uppercase; }
+  .card-front .card-label { color: var(--accent); }
+  .card-back .card-label { color: var(--accent2); }
+  .card-term { font-size: 22px; font-weight: 700; line-height: 1.4; }
+  .card-def { font-size: 15px; line-height: 1.6; color: var(--muted2); max-width: 600px; }
+  .card-hint { font-family: var(--mono); font-size: 11px; color: var(--muted); margin-top: 20px; opacity: 0.6; }
+  .card-nav { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .btn { font-family: var(--mono); font-size: 12px; font-weight: 700; padding: 10px 24px; border-radius: 10px; border: 1px solid var(--border); cursor: pointer; transition: all 0.2s; letter-spacing: 0.5px; }
+  .btn-primary { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+  .btn-primary:hover { box-shadow: 0 0 20px rgba(0,229,255,0.4); transform: translateY(-2px); }
+  .btn-secondary { background: var(--surface2); color: var(--text); }
+  .btn-secondary:hover { background: var(--surface3); border-color: var(--muted); transform: translateY(-1px); }
+  .btn-success { background: rgba(52,211,153,0.15); color: var(--success); border-color: rgba(52,211,153,0.4); }
+  .btn-success:hover { background: rgba(52,211,153,0.25); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(52,211,153,0.2); }
+  .btn-danger { background: rgba(248,113,113,0.15); color: var(--danger); border-color: rgba(248,113,113,0.4); }
+  .btn-danger:hover { background: rgba(248,113,113,0.25); transform: translateY(-2px); }
+  .tag { display: inline-block; font-family: var(--mono); font-size: 10px; padding: 2px 8px; border-radius: 4px; letter-spacing: 0.5px; font-weight: 600; }
+  .tag-cyan { background: rgba(0,229,255,0.12); color: var(--accent); }
+  .tag-purple { background: rgba(167,139,250,0.12); color: var(--accent2); }
+  .tag-green { background: rgba(52,211,153,0.12); color: var(--accent3); }
+  .tag-orange { background: rgba(251,146,60,0.12); color: var(--warn); }
+  .tag-xp { background: rgba(250,204,21,0.15); color: var(--xp-color); border: 1px solid rgba(250,204,21,0.3); }
+
+  .xp-popup { position: fixed; top: 80px; right: 24px; background: rgba(250,204,21,0.15); border: 2px solid var(--xp-color); border-radius: 12px; padding: 10px 20px; font-family: var(--mono); font-size: 16px; font-weight: 700; color: var(--xp-color); z-index: 9998; opacity: 0; transform: translateY(10px); transition: all 0.3s; pointer-events: none; }
+  .xp-popup.show { opacity: 1; transform: translateY(0); }
+
+  .confetti-piece { position: fixed; width: 10px; height: 10px; border-radius: 2px; pointer-events: none; z-index: 9997; animation: confetti-fall 1.5s ease-in forwards; }
+  @keyframes confetti-fall { 0%{transform:translateY(-20px) rotate(0deg);opacity:1} 100%{transform:translateY(100vh) rotate(720deg);opacity:0} }
+
+  .test-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
+  .test-score { font-family: var(--mono); font-size: 13px; color: var(--muted2); }
+  .question-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 32px; margin-bottom: 20px; transition: border-color 0.3s; }
+  .question-card.correct-border { border-color: var(--success); box-shadow: 0 0 20px rgba(52,211,153,0.15); }
+  .question-card.wrong-border { border-color: var(--danger); box-shadow: 0 0 20px rgba(248,113,113,0.15); }
+  .question-num { font-family: var(--mono); font-size: 11px; letter-spacing: 1px; color: var(--accent); margin-bottom: 12px; }
+  .question-text { font-size: 17px; font-weight: 600; line-height: 1.5; margin-bottom: 24px; }
+  .options { display: flex; flex-direction: column; gap: 10px; }
+  .option { padding: 14px 18px; border-radius: 10px; border: 2px solid var(--border); background: var(--surface2); cursor: pointer; font-size: 14px; line-height: 1.5; transition: all 0.2s; display: flex; align-items: flex-start; gap: 12px; }
+  .option:hover:not(.disabled) { border-color: var(--accent); background: var(--accent-dim); color: var(--accent); transform: translateX(4px); }
+  .option.correct { border-color: var(--success); background: rgba(52,211,153,0.1); color: var(--success); animation: option-correct 0.4s ease; }
+  .option.wrong { border-color: var(--danger); background: rgba(248,113,113,0.1); color: var(--danger); animation: option-wrong 0.4s ease; }
+  .option.disabled { cursor: default; }
+  @keyframes option-correct { 0%{transform:scale(1)}50%{transform:scale(1.02)}100%{transform:scale(1)} }
+  @keyframes option-wrong { 0%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}100%{transform:translateX(0)} }
+  .option-letter { font-family: var(--mono); font-size: 12px; font-weight: 700; min-width: 20px; opacity: 0.6; }
+  .explanation { margin-top: 16px; padding: 14px 18px; border-radius: 10px; background: rgba(167,139,250,0.08); border: 1px solid rgba(167,139,250,0.2); font-size: 13px; line-height: 1.6; color: var(--muted2); display: none; }
+  .explanation.show { display: block; animation: fadeIn 0.3s ease; }
+  .explanation strong { color: var(--accent2); }
+  .test-actions { display: flex; gap: 12px; margin-top: 16px; flex-wrap: wrap; }
+  .result-box { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 40px; text-align: center; display: none; }
+  .result-box.show { display: block; animation: fadeIn 0.5s ease; }
+  .result-score { font-size: 64px; font-weight: 800; font-family: var(--mono); margin-bottom: 8px; }
+  .result-label { font-size: 16px; color: var(--muted2); margin-bottom: 24px; }
+  .result-mascot { font-size: 80px; animation: mascot-happy 0.8s ease infinite alternate; display: block; margin-bottom: 16px; }
+  .result-xp { font-family: var(--mono); font-size: 14px; color: var(--xp-color); margin-top: 12px; }
+
+  .resumen-grid { display: grid; gap: 16px; }
+  .resumen-section { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; transition: border-color 0.2s; }
+  .resumen-section:hover { border-color: rgba(0,229,255,0.2); }
+  .resumen-header { padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: background 0.2s; user-select: none; }
+  .resumen-header:hover { background: var(--surface2); }
+  .resumen-title { font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+  .resumen-icon { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+  .resumen-chevron { font-size: 12px; color: var(--muted); transition: transform 0.3s; }
+  .resumen-section.open .resumen-chevron { transform: rotate(180deg); }
+  .resumen-body { padding: 0 20px; max-height: 0; overflow: hidden; transition: max-height 0.4s ease, padding 0.3s; }
+  .resumen-section.open .resumen-body { max-height: 3000px; padding: 0 20px 20px; }
+  .resumen-table { width: 100%; border-collapse: collapse; font-size: 13px; font-family: var(--mono); }
+  .resumen-table th { text-align: left; padding: 8px 12px; color: var(--accent); font-size: 11px; letter-spacing: 1px; border-bottom: 1px solid var(--border); }
+  .resumen-table td { padding: 8px 12px; border-bottom: 1px solid rgba(37,45,64,0.5); vertical-align: top; line-height: 1.6; color: var(--muted2); }
+  .resumen-table tr:last-child td { border-bottom: none; }
+  .resumen-table td:first-child { color: var(--text); font-weight: 600; white-space: nowrap; width: 180px; }
+  .resumen-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+  .resumen-list li { padding: 10px 14px; background: var(--surface2); border-radius: 8px; font-size: 13px; color: var(--muted2); line-height: 1.5; border-left: 3px solid var(--border); }
+  .resumen-list li strong { color: var(--text); }
+  .resumen-list li.cyan { border-left-color: var(--accent); }
+  .resumen-list li.purple { border-left-color: var(--accent2); }
+  .resumen-list li.green { border-left-color: var(--accent3); }
+  .resumen-list li.orange { border-left-color: var(--warn); }
+
+  .cmd-block { background: #0a0f1a; border: 1px solid var(--border); border-radius: 10px; padding: 14px 18px; font-family: var(--mono); font-size: 13px; color: var(--accent3); margin: 8px 0; line-height: 1.8; }
+  .cmd-block .cmd-comment { color: var(--muted); }
+
+  .api-setup { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-bottom: 24px; }
+  .api-label { font-family: var(--mono); font-size: 11px; color: var(--muted); letter-spacing: 1px; margin-bottom: 8px; display: block; }
+  .api-input-row { display: flex; gap: 10px; }
+  .api-input { flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; color: var(--text); font-family: var(--mono); font-size: 13px; outline: none; transition: border-color 0.2s; }
+  .api-input:focus { border-color: var(--accent); }
+  .api-input::placeholder { color: var(--muted); }
+  .chat-window { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; height: 400px; overflow-y: auto; padding: 20px; margin-bottom: 16px; display: flex; flex-direction: column; gap: 16px; scroll-behavior: smooth; }
+  .chat-window::-webkit-scrollbar { width: 4px; }
+  .chat-window::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  .msg { max-width: 80%; padding: 12px 16px; border-radius: 10px; font-size: 14px; line-height: 1.6; }
+  .msg-user { align-self: flex-end; background: var(--accent-dim); border: 1px solid rgba(0,229,255,0.2); color: var(--text); border-bottom-right-radius: 3px; }
+  .msg-ai { align-self: flex-start; background: var(--surface2); border: 1px solid var(--border); color: var(--muted2); border-bottom-left-radius: 3px; }
+  .msg-ai strong { color: var(--text); }
+  .msg-ai code { background: var(--surface3); padding: 1px 6px; border-radius: 4px; font-family: var(--mono); font-size: 12px; color: var(--accent); }
+  .msg-sender { font-family: var(--mono); font-size: 10px; letter-spacing: 1px; margin-bottom: 6px; opacity: 0.6; }
+  .chat-empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; color: var(--muted); }
+  .chat-empty-icon { font-size: 32px; }
+  .chat-empty-text { font-size: 13px; text-align: center; line-height: 1.6; }
+  .chat-suggestions { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+  .suggestion { font-family: var(--mono); font-size: 11px; padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface2); color: var(--muted2); cursor: pointer; transition: all 0.2s; }
+  .suggestion:hover { border-color: var(--accent); color: var(--accent); }
+  .chat-input-row { display: flex; gap: 10px; }
+  .chat-input { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; color: var(--text); font-family: var(--sans); font-size: 14px; outline: none; transition: border-color 0.2s; resize: none; height: 48px; }
+  .chat-input:focus { border-color: var(--accent); }
+  .chat-input::placeholder { color: var(--muted); }
+  .typing { display: flex; gap: 4px; align-items: center; padding: 4px 0; }
+  .typing span { width: 6px; height: 6px; background: var(--muted); border-radius: 50%; animation: blink 1.2s infinite; }
+  .typing span:nth-child(2){animation-delay:0.2s}
+  .typing span:nth-child(3){animation-delay:0.4s}
+  @keyframes blink { 0%,100%{opacity:0.3;transform:translateY(0)}50%{opacity:1;transform:translateY(-3px)} }
+
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(6px); z-index: 10000; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+  .modal-overlay.show { opacity: 1; pointer-events: all; }
+  .modal-box { background: var(--surface); border: 2px solid var(--xp-color); border-radius: 20px; padding: 40px; text-align: center; max-width: 360px; width: 90%; box-shadow: 0 0 60px rgba(250,204,21,0.3); animation: modal-in 0.4s cubic-bezier(0.4,0,0.2,1); }
+  @keyframes modal-in { from{transform:scale(0.7) translateY(20px);opacity:0}to{transform:scale(1) translateY(0);opacity:1} }
+  .modal-emoji { font-size: 72px; display: block; margin-bottom: 16px; animation: mascot-happy 0.6s ease infinite alternate; }
+  .modal-title { font-size: 24px; font-weight: 800; color: var(--xp-color); margin-bottom: 8px; }
+  .modal-sub { font-size: 14px; color: var(--muted2); margin-bottom: 24px; line-height: 1.5; }
+
+  .combo-wrap { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
+  .combo-count { font-family: var(--mono); font-size: 20px; font-weight: 800; color: var(--warn); }
+  .combo-label { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+  .combo-fire { font-size: 20px; animation: pulse 0.5s infinite; }
+
+  .osi-layer { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-radius: 8px; margin-bottom: 6px; transition: all 0.2s; }
+  .osi-layer:hover { transform: translateX(4px); }
+  .osi-num { font-family: var(--mono); font-size: 20px; font-weight: 800; width: 32px; text-align: center; }
+  .osi-name { font-weight: 700; font-size: 14px; min-width: 120px; }
+  .osi-desc { font-size: 13px; color: var(--muted2); }
+  .proc-state { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 20px; font-family: var(--mono); font-size: 12px; font-weight: 700; margin: 4px; }
+</style>
+</head>
+<body>
+
+<div class="xp-popup" id="xp-popup">+10 XP ⚡</div>
+
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal-box">
+    <span class="modal-emoji" id="modal-emoji">🎉</span>
+    <div class="modal-title" id="modal-title">¡NIVEL SUBIDO!</div>
+    <div class="modal-sub" id="modal-sub">Sigue así, crack.</div>
+    <button class="btn btn-primary" onclick="closeModal()" style="margin-top:8px">¡Seguir aprendiendo! →</button>
+  </div>
+</div>
+
+<header>
+  <div style="display:flex;align-items:center;gap:16px;">
+    <div class="logo"><div class="logo-dot"></div>StudyOS</div>
+    <div class="unit-badge">ASIR · ISO · UNIDAD 2 · SOFTWARE DE BASE</div>
+  </div>
+  <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+    <div class="streak-badge">🔥 <span id="streak-count">0</span></div>
+    <div class="xp-bar-wrap">
+      <div class="xp-label">XP</div>
+      <div class="xp-track"><div class="xp-fill" id="xp-fill" style="width:0%"></div></div>
+      <div class="xp-count" id="xp-count">0 / 100</div>
+    </div>
+  </div>
+</header>
+
+<nav>
+  <button class="nav-btn active" onclick="switchView('flashcards',this)">⚡ Flashcards</button>
+  <button class="nav-btn" onclick="switchView('test',this)">📝 Test</button>
+  <button class="nav-btn" onclick="switchView('resumen',this)">📚 Resumen</button>
+  <button class="nav-btn" onclick="switchView('chat',this)">🤖 Chat IA</button>
+</nav>
+
+<main>
+
+<!-- ══════════ FLASHCARDS ══════════ -->
+<div id="view-flashcards" class="view active">
+  <div class="mascot-wrap">
+    <div class="mascot" id="mascot" onclick="mascotTalk()">🦉</div>
+    <div>
+      <div class="mascot-name">BYTE · TU TUTOR</div>
+      <div class="mascot-bubble" id="mascot-bubble">¡Hola! Soy Byte 🦉 Esta unidad tiene mucha chicha: usuarios, grupos, procesos, OSI y DNS. ¡A estudiar!</div>
+    </div>
+  </div>
+  <div class="section-title">Flashcards · Unidad 2</div>
+  <div class="section-sub">// CLICK EN LA TARJETA PARA VER LA DEFINICIÓN · <span id="fc-total">28</span> TARJETAS</div>
+  <div class="flashcard-controls">
+    <div class="progress-text">Tarjeta <span id="fc-current">1</span> / <span id="fc-total2">28</span></div>
+    <div class="progress-bar"><div class="progress-fill" id="fc-progress"></div></div>
+  </div>
+  <div class="card-scene" id="card-scene" onclick="flipCard()">
+    <div class="card-inner">
+      <div class="card-face card-front">
+        <div class="card-label">TÉRMINO</div>
+        <div class="card-term" id="fc-term">—</div>
+        <div class="card-hint">↩ click para ver definición</div>
+      </div>
+      <div class="card-face card-back">
+        <div class="card-label">DEFINICIÓN</div>
+        <div class="card-def" id="fc-def">—</div>
+      </div>
+    </div>
+  </div>
+  <div class="card-nav">
+    <button class="btn btn-secondary" onclick="prevCard()">← Anterior</button>
+    <button class="btn btn-danger" onclick="markCard('mal')">✗ No lo sé</button>
+    <button class="btn btn-success" onclick="markCard('bien')">✓ Lo sé</button>
+    <button class="btn btn-secondary" onclick="nextCard()">Siguiente →</button>
+  </div>
+  <div style="margin-top:20px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
+    <span class="tag tag-green" id="fc-bien">✓ 0</span>
+    <span class="tag tag-orange" id="fc-mal">✗ 0</span>
+    <span class="tag tag-xp" id="fc-xp-tag">⚡ 0 XP ganados</span>
+    <button class="btn btn-secondary" style="font-size:11px;padding:6px 14px" onclick="shuffleCards()">🔀 Barajar</button>
+    <button class="btn btn-secondary" style="font-size:11px;padding:6px 14px" onclick="resetCards()">↺ Reiniciar</button>
+  </div>
+</div>
+
+<!-- ══════════ TEST ══════════ -->
+<div id="view-test" class="view">
+  <div class="mascot-wrap">
+    <div class="mascot" id="mascot-test">🦉</div>
+    <div>
+      <div class="mascot-name">BYTE · TEST MODE</div>
+      <div class="mascot-bubble" id="mascot-bubble-test">¡Hora del examen! Cuentas de usuario, grupos, OSI, DNS... ¡Demuéstrame lo que sabes! 🎯</div>
+    </div>
+  </div>
+  <div class="lives-wrap" id="lives-wrap">
+    <span class="heart" id="h1">❤️</span>
+    <span class="heart" id="h2">❤️</span>
+    <span class="heart" id="h3">❤️</span>
+    <span class="lives-label">vidas</span>
+  </div>
+  <div class="combo-wrap" id="combo-wrap" style="display:none">
+    <span class="combo-count" id="combo-count">x2</span>
+    <span class="combo-fire">🔥</span>
+    <span class="combo-label">COMBO · XP x<span id="combo-multi">2</span></span>
+  </div>
+  <div class="section-title">Test Tipo Examen</div>
+  <div class="section-sub">// 10 PREGUNTAS · UNA SOLA RESPUESTA CORRECTA</div>
+  <div id="test-body">
+    <div class="test-header">
+      <div class="test-score">Pregunta <span id="q-num">1</span>/10</div>
+      <div class="test-score">✓ <span id="q-correct">0</span> &nbsp;|&nbsp; ✗ <span id="q-wrong">0</span></div>
+    </div>
+    <div class="question-card" id="question-card">
+      <div class="question-num" id="q-label">PREGUNTA 01</div>
+      <div class="question-text" id="q-text">—</div>
+      <div class="options" id="q-options"></div>
+      <div class="explanation" id="q-explanation"></div>
+    </div>
+    <div class="test-actions">
+      <button class="btn btn-primary" id="btn-next-q" onclick="nextQuestion()" style="display:none">Siguiente →</button>
+      <button class="btn btn-secondary" onclick="resetTest()">↺ Reiniciar</button>
+    </div>
+  </div>
+  <div class="result-box" id="result-box">
+    <span class="result-mascot" id="result-mascot">🎉</span>
+    <div class="result-score" id="result-score">—</div>
+    <div class="result-label" id="result-label">—</div>
+    <div class="result-xp" id="result-xp">⚡ +0 XP ganados en este test</div>
+    <button class="btn btn-primary" onclick="resetTest()" style="margin-top:24px">Repetir test →</button>
+  </div>
+</div>
+
+<!-- ══════════ RESUMEN ══════════ -->
+<div id="view-resumen" class="view">
+  <div class="section-title">Resumen · Unidad 2</div>
+  <div class="section-sub">// CONFIGURAR SOFTWARE DE BASE · GESTIÓN DE PROCESOS · OSI · DNS</div>
+  <div class="resumen-grid">
+
+    <div class="resumen-section open">
+      <div class="resumen-header" onclick="toggleSection(this)">
+        <div class="resumen-title"><div class="resumen-icon" style="background:rgba(0,229,255,0.1)">👤</div>Cuentas de Usuario</div>
+        <div class="resumen-chevron">▼</div>
+      </div>
+      <div class="resumen-body">
+        <ul class="resumen-list">
+          <li class="cyan"><strong>Estándar:</strong> uso cotidiano. Necesita permiso de admin para cambios que afecten al sistema o a otros usuarios.</li>
+          <li class="purple"><strong>Administrador:</strong> control total. Puede instalar/desinstalar SW y HW, modificar seguridad, acceder a todos los archivos. Solo usarla cuando sea necesario.</li>
+          <li class="green"><strong>Invitado:</strong> acceso temporal sin cuenta permanente. No puede instalar SW/HW ni cambiar la configuración ni crear contraseña. Hay que activarla antes de usarla.</li>
+          <li class="orange"><strong>UPN (User Principal Name):</strong> nombre de inicio de sesión en red Windows Server. Formato: usuario@dominio.local (ej. godofredo@iesromerovargas.local).</li>
+          <li class="cyan"><strong>Estrategias de nomenclatura:</strong> 2+2+2 letras nombre/apellido1/apellido2, o 3 nombre + 2 apellido1, o 4 nombre + ini1 + ini2 + 2 últimos DNI.</li>
+          <li class="purple"><strong>Tipos en AD:</strong> Usuario (persona física), Grupo (contenedor), Equipo (máquina). Las cuentas de grupo son contenedores de las otras dos.</li>
+        </ul>
+        <br>
+        <table class="resumen-table">
+          <tr><th>Tipo de cuenta</th><th>Puede instalar SW</th><th>Puede cambiar config sistema</th><th>Requiere contraseña</th></tr>
+          <tr><td>Estándar</td><td>No (sin perm. admin)</td><td>No</td><td>Sí</td></tr>
+          <tr><td>Administrador</td><td>Sí</td><td>Sí</td><td>Sí</td></tr>
+          <tr><td>Invitado</td><td>No</td><td>No</td><td>No</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="resumen-section">
+      <div class="resumen-header" onclick="toggleSection(this)">
+        <div class="resumen-title"><div class="resumen-icon" style="background:rgba(251,146,60,0.1)">🔐</div>Contraseñas y Directivas</div>
+        <div class="resumen-chevron">▼</div>
+      </div>
+      <div class="resumen-body">
+        <ul class="resumen-list">
+          <li class="cyan"><strong>Buena contraseña:</strong> mínimo 6 caracteres, mayúsculas + minúsculas + número, no es el nombre ni datos personales, no es rotación del login.</li>
+          <li class="green"><strong>Mejor técnica:</strong> acrónimo alfanumérico de una frase. Ej: "hasta luego Lucas" → H4st4luegoluc4S.</li>
+          <li class="purple"><strong>Opciones al crear usuario en AD:</strong> El usuario debe cambiar la contraseña en el siguiente inicio de sesión / El usuario no puede cambiar la contraseña / La contraseña nunca expira / La cuenta está deshabilitada.</li>
+          <li class="orange"><strong>Cuenta deshabilitada:</strong> se puede deshabilitar manualmente o automáticamente (bloqueo por intentos fallidos). En producción, mejor deshabilitar que eliminar.</li>
+          <li class="cyan"><strong>Creación desde CMD:</strong> dsadd user "CN=MARGARITA,CN=USERS,DC=BIXO,DC=COM" -pwd Abcd1234</li>
+          <li class="green"><strong>Comandos administración:</strong> dsmod (modificar), dsrm (eliminar), dsmove (mover), dsget (info). Formato: dsmod user "nombre_distinguido" -opcion valor</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="resumen-section">
+      <div class="resumen-header" onclick="toggleSection(this)">
+        <div class="resumen-title"><div class="resumen-icon" style="background:rgba(52,211,153,0.1)">👥</div>Grupos y Ámbito en AD</div>
+        <div class="resumen-chevron">▼</div>
+      </div>
+      <div class="resumen-body">
+        <ul class="resumen-list">
+          <li class="cyan"><strong>Grupos de distribución:</strong> solo correo electrónico. NO para seguridad.</li>
+          <li class="purple"><strong>Grupos de seguridad:</strong> asignar derechos y permisos a usuarios y equipos. Más eficaz cuando está anidado.</li>
+        </ul>
+        <br>
+        <table class="resumen-table">
+          <tr><th>Ámbito</th><th>Visibilidad</th><th>Contiene</th></tr>
+          <tr><td>Local de dominio</td><td>Solo dentro del dominio donde se crea</td><td>Usuarios, grupos globales y universales</td></tr>
+          <tr><td>Global</td><td>Todos los dominios del bosque</td><td>Usuarios y grupos del MISMO dominio</td></tr>
+          <tr><td>Universal</td><td>Cualquier dominio del bosque</td><td>Usuarios, grupos globales y otros universales</td></tr>
+        </table>
+        <br>
+        <div class="cmd-block">
+          <span class="cmd-comment"># Crear grupo en AD desde CMD</span><br>
+          dsadd group "CN=VIKINGOS,CN=USERS,DC=BIXO,DC=COM"<br><br>
+          <span class="cmd-comment"># Opciones útiles: -secgrp yes|no / -scope l|g|u</span><br>
+          <span class="cmd-comment"># Añadir miembros a un grupo</span><br>
+          dsmod group "CN=VIKINGOS,..." -addmbr "CN=USUARIO1,..."
+        </div>
+      </div>
+    </div>
+
+    <div class="resumen-section">
+      <div class="resumen-header" onclick="toggleSection(this)">
+        <div class="resumen-title"><div class="resumen-icon" style="background:rgba(167,139,250,0.1)">🏢</div>Unidades Organizativas (OU) y GPOs</div>
+        <div class="resumen-chevron">▼</div>
+      </div>
+      <div class="resumen-body">
+        <ul class="resumen-list">
+          <li class="cyan"><strong>OU (Organizational Unit):</strong> contenedores lógicos en AD para organizar usuarios, grupos y equipos. Estructuran la jerarquía administrativa.</li>
+          <li class="purple"><strong>Usos comunes:</strong> por departamento (RRHH, IT, Finanzas), por ubicación geográfica, por función (Servidores, Estaciones de Trabajo).</li>
+          <li class="green"><strong>Crear OU (PowerShell):</strong> New-ADOrganizationalUnit -Name "Departamentos" -Path "DC=prueba,DC=local"</li>
+          <li class="orange"><strong>GPO (Group Policy Object):</strong> vinculado a una OU para configurar restricciones de seguridad y comportamiento de usuarios y equipos.</li>
+          <li class="cyan"><strong>Crear/Editar GPO:</strong> Herramientas → Administración de directivas de grupo → clic derecho en OU → Nueva GPO → Editar.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="resumen-section">
+      <div class="resumen-header" onclick="toggleSection(this)">
+        <div class="resumen-title"><div class="resumen-icon" style="background:rgba(0,229,255,0.1)">⚙️</div>Gestión de Procesos</div>
+        <div class="resumen-chevron">▼</div>
+      </div>
+      <div class="resumen-body">
+        <ul class="resumen-list">
+          <li class="cyan"><strong>Proceso:</strong> programa en ejecución que requiere CPU, memoria y dispositivos E/S. El SO gestiona la planificación mediante el PCB.</li>
+          <li class="purple"><strong>PCB (Process Control Block):</strong> estructura de datos que representa un proceso: apuntador, estado, número de proceso, contador de programa, registros, límites de memoria, lista de archivos abiertos.</li>
+          <li class="green"><strong>Estados de un proceso:</strong> Nuevo → Preparado → Ejecución → Bloqueado → Terminado.</li>
+          <li class="orange"><strong>Planificación expulsiva:</strong> el SO puede desalojar un proceso de la CPU antes de que termine (Round Robin, prioridades dinámicas).</li>
+          <li class="cyan"><strong>Planificación no expulsiva:</strong> el proceso no puede ser desalojado hasta que termina (FCFS/FIFO).</li>
+        </ul>
+        <br>
+        <table class="resumen-table">
+          <tr><th>Algoritmo</th><th>Tipo</th><th>Descripción</th></tr>
+          <tr><td>FCFS/FIFO</td><td>No expulsivo</td><td>Primero en entrar, primero en salir</td></tr>
+          <tr><td>SJF</td><td>No expulsivo</td><td>El proceso más corto primero. Empate → el que llegó antes</td></tr>
+          <tr><td>SRTF</td><td>Expulsivo</td><td>El más corto pendiente. Interrumpe si llega uno más corto</td></tr>
+          <tr><td>Round Robin (RR)</td><td>Expulsivo</td><td>Porciones iguales de CPU para todos los procesos</td></tr>
+          <tr><td>Windows (RR+Prio)</td><td>Expulsivo</td><td>RR con Prioridades Dinámicas. Puede interrumpir si hay mayor prioridad</td></tr>
+        </table>
+        <br>
+        <div class="cmd-block">
+          <span class="cmd-comment"># Listar procesos en CMD</span><br>
+          tasklist<br>
+          tasklist /FI "IMAGENAME eq chrome.exe"<br><br>
+          <span class="cmd-comment"># Matar proceso por PID o nombre</span><br>
+          taskkill /PID 1234 /F<br>
+          taskkill /IM notepad.exe /F<br><br>
+          <span class="cmd-comment"># Cambiar prioridad en PowerShell</span><br>
+          (Get-Process chrome).PriorityClass = "High"
+        </div>
+        <br>
+        <p style="font-size:13px;color:var(--muted2)">El <strong style="color:var(--text)">Administrador de Tareas</strong> (Ctrl+Shift+Esc) muestra: Procesos, Rendimiento, Historial de apps, Inicio, Usuarios, Detalles y Servicios.</p>
+      </div>
+    </div>
+
+    <div class="resumen-section">
+      <div class="resumen-header" onclick="toggleSection(this)">
+        <div class="resumen-title"><div class="resumen-icon" style="background:rgba(52,211,153,0.1)">🌐</div>Modelo OSI y TCP/IP</div>
+        <div class="resumen-chevron">▼</div>
+      </div>
+      <div class="resumen-body">
+        <div style="margin-bottom:16px">
+          <div class="osi-layer" style="background:rgba(0,229,255,0.06);border:1px solid rgba(0,229,255,0.2)">
+            <span class="osi-num" style="color:var(--accent)">7</span>
+            <span class="osi-name" style="color:var(--accent)">Aplicación</span>
+            <span class="osi-desc">HTTP, DNS, DHCP, FTP, SMTP. Más cercana al usuario final.</span>
+          </div>
+          <div class="osi-layer" style="background:rgba(167,139,250,0.06);border:1px solid rgba(167,139,250,0.2)">
+            <span class="osi-num" style="color:var(--accent2)">6</span>
+            <span class="osi-name" style="color:var(--accent2)">Presentación</span>
+            <span class="osi-desc">Traducción, cifrado (SSL/TLS), compresión y formato de datos.</span>
+          </div>
+          <div class="osi-layer" style="background:rgba(52,211,153,0.06);border:1px solid rgba(52,211,153,0.2)">
+            <span class="osi-num" style="color:var(--accent3)">5</span>
+            <span class="osi-name" style="color:var(--accent3)">Sesión</span>
+            <span class="osi-desc">Establece sesiones entre apps. Protocolos: SMB, PPTP (VPN).</span>
+          </div>
+          <div class="osi-layer" style="background:rgba(251,146,60,0.06);border:1px solid rgba(251,146,60,0.2)">
+            <span class="osi-num" style="color:var(--warn)">4</span>
+            <span class="osi-name" style="color:var(--warn)">Transporte</span>
+            <span class="osi-desc">TCP (orientado a conexión, fiable) y UDP (sin conexión, velocidad).</span>
+          </div>
+          <div class="osi-layer" style="background:rgba(248,113,113,0.06);border:1px solid rgba(248,113,113,0.2)">
+            <span class="osi-num" style="color:var(--danger)">3</span>
+            <span class="osi-name" style="color:var(--danger)">Red</span>
+            <span class="osi-desc">Direccionamiento lógico (IP), enrutamiento. EN CADA SALTO CAMBIA LA MAC, LA IP SE MANTIENE.</span>
+          </div>
+          <div class="osi-layer" style="background:rgba(167,139,250,0.04);border:1px solid rgba(167,139,250,0.15)">
+            <span class="osi-num" style="color:#c084fc)">2</span>
+            <span class="osi-name" style="color:var(--muted2)">Enlace de datos</span>
+            <span class="osi-desc">Dirección MAC, protocolo ARP para mapear MAC←→IP.</span>
+          </div>
+          <div class="osi-layer" style="background:rgba(100,116,139,0.06);border:1px solid rgba(100,116,139,0.2)">
+            <span class="osi-num" style="color:var(--muted2)">1</span>
+            <span class="osi-name" style="color:var(--muted2)">Física</span>
+            <span class="osi-desc">Transmisión de bits. Cables de red, wifi, fibra óptica.</span>
+          </div>
+        </div>
+        <table class="resumen-table">
+          <tr><th>Aspecto</th><th>Modelo OSI</th><th>Modelo TCP/IP</th></tr>
+          <tr><td>Capas</td><td>7</td><td>4</td></tr>
+          <tr><td>Enfoque</td><td>Teórico y general</td><td>Pragmático, basado en Internet</td></tr>
+          <tr><td>Capas App.</td><td>Aplicación + Presentación + Sesión</td><td>1 capa Aplicación</td></tr>
+          <tr><td>Adopción</td><td>Teórico / referencia</td><td>Estándar real en Internet</td></tr>
+        </table>
+        <br>
+        <ul class="resumen-list">
+          <li class="cyan"><strong>TCP:</strong> orientado a conexión. Handshake, paquetes en orden, reenvío si se pierde. Para transferencias, web, correo.</li>
+          <li class="purple"><strong>UDP:</strong> sin conexión. Más rápido. Se usa cuando una pérdida es aceptable: videollamadas, streaming, juegos online.</li>
+          <li class="green"><strong>Unicast:</strong> uno a uno. <strong>Broadcast:</strong> uno a todos (ARP). <strong>Multicast:</strong> uno a muchos específicos (streaming).</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="resumen-section">
+      <div class="resumen-header" onclick="toggleSection(this)">
+        <div class="resumen-title"><div class="resumen-icon" style="background:rgba(0,229,255,0.1)">🔍</div>DNS en Windows Server</div>
+        <div class="resumen-chevron">▼</div>
+      </div>
+      <div class="resumen-body">
+        <ul class="resumen-list">
+          <li class="cyan"><strong>DNS:</strong> Domain Name System. Traduce nombres de dominio a IPs y viceversa. Sin DNS, hay que usar IPs numéricas.</li>
+          <li class="purple"><strong>Zona de búsqueda directa:</strong> nombre de dominio → IP. Registros tipo A (IPv4) y AAAA (IPv6). Ej: www.empresa.local → 192.168.1.102</li>
+          <li class="green"><strong>Zona de búsqueda inversa:</strong> IP → nombre de dominio. Registros tipo PTR. Ej: 192.168.1.10 → www.empresa.local. Útil para auditorías de seguridad.</li>
+          <li class="orange"><strong>Registro A / Host nuevo:</strong> Nombre (www), FQDN (www.prueba.local), IP (192.168.68.51). Opcional: crear registro PTR asociado.</li>
+          <li class="cyan"><strong>nslookup:</strong> herramienta CMD para diagnosticar DNS. Búsqueda directa: nslookup www.prueba.local. Inversa: nslookup 192.168.68.51</li>
+        </ul>
+        <br>
+        <div class="cmd-block">
+          <span class="cmd-comment"># Pasos configurar DNS en Windows Server</span><br>
+          <span class="cmd-comment"># 1. Herramientas Administrativas → DNS</span><br>
+          <span class="cmd-comment"># 2. Nueva zona de búsqueda inversa (para PTR)</span><br>
+          <span class="cmd-comment">&nbsp;&nbsp;&nbsp;→ Primeros 3 octetos de la red: 192.168.68</span><br>
+          <span class="cmd-comment"># 3. En zona directa → clic derecho → Host nuevo</span><br>
+          <span class="cmd-comment">&nbsp;&nbsp;&nbsp;→ Nombre: www, IP: 192.168.68.51, marcar PTR</span><br><br>
+          <span class="cmd-comment"># Configurar cliente para usar el servidor DNS</span><br>
+          <span class="cmd-comment">&nbsp;&nbsp;&nbsp;→ TCP/IPv4 → DNS preferido: IP del servidor</span><br><br>
+          <span class="cmd-comment"># Verificar resolución</span><br>
+          nslookup www.prueba.local<br>
+          nslookup 192.168.68.51
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════ CHAT IA ══════════ -->
+<div id="view-chat" class="view">
+  <div class="mascot-wrap">
+    <div class="mascot">🦉</div>
+    <div>
+      <div class="mascot-name">BYTE · CHAT MODE</div>
+      <div class="mascot-bubble">¡Pregúntame sobre usuarios, grupos, procesos, OSI o DNS! Soy experto en Unidad 2 🔧</div>
+    </div>
+  </div>
+  <div class="section-title">Chat con IA</div>
+  <div class="section-sub">// TUTOR ESPECIALIZADO EN UNIDAD 2 — SOFTWARE DE BASE, PROCESOS, OSI, DNS</div>
+  <div class="api-setup">
+    <label class="api-label">API KEY DE ANTHROPIC</label>
+    <div class="api-input-row">
+      <input type="password" class="api-input" id="api-key-input" placeholder="sk-ant-api03-..." />
+      <button class="btn btn-primary" onclick="saveKey()">Guardar</button>
+    </div>
+    <div style="font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:8px;">La key se guarda en sessionStorage (solo en esta pestaña).</div>
+  </div>
+  <div class="chat-suggestions">
+    <button class="suggestion" onclick="sendSuggestion(this)">¿Qué diferencia hay entre cuenta estándar y administrador?</button>
+    <button class="suggestion" onclick="sendSuggestion(this)">¿Cuántas capas tiene el modelo OSI y para qué sirve cada una?</button>
+    <button class="suggestion" onclick="sendSuggestion(this)">¿Cómo funciona el DNS en Windows Server?</button>
+    <button class="suggestion" onclick="sendSuggestion(this)">Explícame los algoritmos de planificación de procesos</button>
+    <button class="suggestion" onclick="sendSuggestion(this)">¿Qué es una OU y para qué se usa en Active Directory?</button>
+    <button class="suggestion" onclick="sendSuggestion(this)">¿Diferencia entre TCP y UDP?</button>
+  </div>
+  <div class="chat-window" id="chat-window">
+    <div class="chat-empty" id="chat-empty">
+      <div class="chat-empty-icon">🦉</div>
+      <div class="chat-empty-text">Introduce tu API key y pregúntame cualquier cosa<br>sobre la Unidad 2 — Software de Base, Procesos, OSI y DNS.</div>
+    </div>
+  </div>
+  <div class="chat-input-row">
+    <textarea class="chat-input" id="chat-input" placeholder="Pregunta algo sobre la Unidad 2... (Enter para enviar)" onkeydown="chatKeyDown(event)"></textarea>
+    <button class="btn btn-primary" onclick="sendChat()">Enviar →</button>
+  </div>
+</div>
+
+</main>
+
+<script>
+// ═══════════════════════════════════════════
+// GAMIFICATION ENGINE
+// ═══════════════════════════════════════════
+let xp = 0, level = 1, streak = 0, combo = 0;
+const XP_PER_LEVEL = 100;
+let fcXpGained = 0, testXpGained = 0;
+
+const MASCOT_MESSAGES_IDLE = [
+  "¡Sigue así! Las cuentas de usuario y grupos son clave para el examen 💪",
+  "Recuerda: grupos de seguridad para permisos, grupos de distribución solo para correo 📧",
+  "En CADA SALTO del router la MAC cambia, pero la IP se mantiene. ¡Eso cae seguro! 🌐",
+  "FCFS = primero en llegar primero en ejecutar. Round Robin = porciones iguales. ¡Memoriza! ⚙️",
+  "DNS: Zona directa = nombre→IP (registro A). Zona inversa = IP→nombre (registro PTR). 🔍",
+  "La cuenta de administrador solo cuando sea necesario. Para trabajo diario: cuenta estándar 🛡️",
+  "TCP = conexión segura (web, correo). UDP = velocidad sin garantías (streaming, juegos). ⚡",
+  "dsadd, dsmod, dsrm, dsmove, dsget — los 5 comandos estrella de AD 🖥️",
+];
+
+function gainXP(amount, label) {
+  xp += amount;
+  if(label) {
+    const popup = document.getElementById('xp-popup');
+    popup.textContent = `+${amount} XP ${label || '⚡'}`;
+    popup.classList.add('show');
+    setTimeout(() => popup.classList.remove('show'), 1500);
+  }
+  updateXPBar();
+  checkLevelUp();
+}
+
+function updateXPBar() {
+  const currentLevelXP = xp - (level - 1) * XP_PER_LEVEL;
+  const pct = Math.min((currentLevelXP / XP_PER_LEVEL) * 100, 100);
+  document.getElementById('xp-fill').style.width = pct + '%';
+  document.getElementById('xp-count').textContent = `${xp} / ${level * XP_PER_LEVEL}`;
+}
+
+function checkLevelUp() {
+  const newLevel = Math.floor(xp / XP_PER_LEVEL) + 1;
+  if (newLevel > level) { level = newLevel; showLevelUp(); }
+}
+
+function showLevelUp() {
+  spawnConfetti(60);
+  playSound('levelup');
+  document.getElementById('modal-emoji').textContent = ['🎉','🚀','⭐','🔥','💎'][Math.min(level-2,4)] || '🏆';
+  document.getElementById('modal-title').textContent = `¡NIVEL ${level}!`;
+  document.getElementById('modal-sub').textContent = `¡Nivel ${level}! Dominas la Unidad 2 como un sysadmin profesional 🦉`;
+  document.getElementById('modal-overlay').classList.add('show');
+}
+
+function closeModal() { document.getElementById('modal-overlay').classList.remove('show'); }
+
+function updateStreak(correct) {
+  if (correct) { streak++; combo++; document.getElementById('streak-count').textContent = streak; }
+  else { combo = 0; }
+  updateCombo();
+}
+
+function updateCombo() {
+  const cw = document.getElementById('combo-wrap');
+  if (combo >= 2) {
+    cw.style.display = 'flex';
+    const multi = Math.min(combo, 5);
+    document.getElementById('combo-count').textContent = `x${multi}`;
+    document.getElementById('combo-multi').textContent = multi;
+  } else { cw.style.display = 'none'; }
+}
+
+function getComboMultiplier() { return Math.min(combo, 5); }
+
+// ── SOUNDS ──
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let audioCtx;
+function initAudio() { if (!audioCtx) audioCtx = new AudioCtx(); }
+function playSound(type) {
+  try {
+    initAudio();
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.connect(g); g.connect(audioCtx.destination);
+    if (type === 'correct') {
+      o.frequency.setValueAtTime(523, audioCtx.currentTime);
+      o.frequency.setValueAtTime(659, audioCtx.currentTime + 0.1);
+      o.frequency.setValueAtTime(784, audioCtx.currentTime + 0.2);
+      g.gain.setValueAtTime(0.15, audioCtx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
+      o.start(); o.stop(audioCtx.currentTime + 0.5);
+    } else if (type === 'wrong') {
+      o.type = 'sawtooth';
+      o.frequency.setValueAtTime(200, audioCtx.currentTime);
+      o.frequency.setValueAtTime(150, audioCtx.currentTime + 0.15);
+      g.gain.setValueAtTime(0.12, audioCtx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.4);
+      o.start(); o.stop(audioCtx.currentTime + 0.4);
+    } else if (type === 'flip') {
+      o.type = 'sine'; o.frequency.setValueAtTime(880, audioCtx.currentTime);
+      g.gain.setValueAtTime(0.05, audioCtx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.15);
+      o.start(); o.stop(audioCtx.currentTime + 0.15);
+    } else if (type === 'levelup') {
+      [523,659,784,1047].forEach((f,i) => {
+        const o2=audioCtx.createOscillator(), g2=audioCtx.createGain();
+        o2.connect(g2); g2.connect(audioCtx.destination);
+        o2.frequency.setValueAtTime(f, audioCtx.currentTime+i*0.12);
+        g2.gain.setValueAtTime(0.15, audioCtx.currentTime+i*0.12);
+        g2.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime+i*0.12+0.3);
+        o2.start(audioCtx.currentTime+i*0.12); o2.stop(audioCtx.currentTime+i*0.12+0.3);
+      }); return;
+    }
+  } catch(e) {}
+}
+
+// ── CONFETTI ──
+function spawnConfetti(count=30) {
+  const colors = ['#00e5ff','#a78bfa','#34d399','#facc15','#f87171','#fb923c'];
+  for (let i=0; i<count; i++) {
+    setTimeout(() => {
+      const el = document.createElement('div');
+      el.className = 'confetti-piece';
+      el.style.cssText = `left:${Math.random()*100}vw;top:-10px;background:${colors[Math.floor(Math.random()*colors.length)]};width:${6+Math.random()*8}px;height:${6+Math.random()*8}px;border-radius:${Math.random()>0.5?'50%':'2px'};animation-duration:${1+Math.random()*1.5}s;animation-delay:${Math.random()*0.3}s;`;
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 2500);
+    }, Math.random()*300);
+  }
+}
+
+// ── MASCOT ──
+let mascotTipIndex = 0;
+function mascotTalk() {
+  document.getElementById('mascot-bubble').textContent = MASCOT_MESSAGES_IDLE[mascotTipIndex % MASCOT_MESSAGES_IDLE.length];
+  mascotTipIndex++;
+  const m = document.getElementById('mascot');
+  m.classList.remove('happy','sad'); void m.offsetWidth; m.classList.add('happy');
+  setTimeout(() => m.classList.remove('happy'), 600);
+}
+
+function mascotReact(correct) {
+  const msgs_ok = ["¡Perfecto! 🎯","¡Correcto! Eres un crack de ASIR 💪","¡Sí! +XP para ti ⚡","¡Exacto! Eso lo llevas clarísimo 🦉"];
+  const msgs_bad = ["¡Casi! Repasa ese concepto 📖","No pasa nada, sigue intentando 💙","Difícil, ¿verdad? Vuelve al resumen 📚","¡Aprendes del error! Sigue adelante 🔄"];
+  const bubble = document.getElementById('mascot-bubble-test');
+  if(bubble) bubble.textContent = correct ? msgs_ok[Math.floor(Math.random()*msgs_ok.length)] : msgs_bad[Math.floor(Math.random()*msgs_bad.length)];
+  const m = document.getElementById('mascot-test');
+  if(m) { m.classList.remove('happy','sad'); void m.offsetWidth; m.classList.add(correct?'happy':'sad'); setTimeout(()=>m.classList.remove('happy','sad'),600); }
+}
+
+// ═══════════════════════════════════════════
+// FLASHCARDS DATA
+// ═══════════════════════════════════════════
+const FLASHCARDS = [
+  {term:"Cuenta de usuario estándar",def:"Permite usar la mayoría de funciones del equipo, pero necesita permiso de administrador para cambios que afecten a otros usuarios o la seguridad del equipo. Recomendada para trabajo diario."},
+  {term:"Cuenta de usuario administrador",def:"Control total del equipo. Puede instalar/desinstalar SW y HW, cambiar configuración de seguridad, acceder a todos los archivos y modificar otras cuentas. Solo usar cuando sea necesario."},
+  {term:"Cuenta de usuario invitado",def:"Para usuarios sin cuenta permanente. No puede instalar SW/HW, cambiar la configuración del sistema ni crear contraseña. Debe activarse antes de usar. Acceso temporal a recursos del equipo."},
+  {term:"UPN (User Principal Name)",def:"Nombre de inicio de sesión en red Windows Server. Formato: usuario@dominio (ej. godofredo@iesromerovargas.local). El sufijo (después de @) es el nombre del dominio del controlador."},
+  {term:"dsadd user",def:"Comando para crear cuentas de usuario desde la línea de comandos en Windows Server. Sintaxis: dsadd user 'CN=NOMBRE,CN=USERS,DC=DOMINIO,DC=COM' -pwd Contraseña"},
+  {term:"dsmod / dsrm / dsget",def:"Comandos AD para administrar cuentas: dsmod (modificar), dsrm (eliminar), dsmove (mover), dsget (obtener info). Se usan con el nombre distinguido (DN) del objeto."},
+  {term:"Nombre Distinguido (DN)",def:"Identificador único de un objeto en AD. Ejemplo: CN=MARGARITA,CN=USERS,DC=BIXO,DC=COM. Componentes: CN (nombre común), OU (unidad organizativa), DC (componente de dominio)."},
+  {term:"CSVDE / LDIFDE",def:"Comandos para creación masiva de cuentas. CSVDE usa archivos CSV (no puede importar contraseñas). LDIFDE es más potente: puede importar/exportar contraseñas usando ficheros con formato especial."},
+  {term:"Grupos de distribución",def:"Tipo de grupo en AD que se usa SOLO con aplicaciones de correo electrónico. No está habilitado para seguridad. Se usa para enviar correos a múltiples usuarios habitualmente."},
+  {term:"Grupos de seguridad",def:"Tipo de grupo en AD para asignar derechos y permisos a usuarios y equipos. Se usa de forma más eficaz cuando está anidado. Es el tipo de grupo más importante en administración."},
+  {term:"Ámbito Local de Dominio",def:"Grupos solo visibles dentro del dominio donde se crean. Se usa para asignar permisos en recursos locales. Puede contener usuarios, grupos globales y universales."},
+  {term:"Ámbito Global",def:"Grupos visibles en todos los dominios del bosque. Se usa principalmente para organizar usuarios dentro de un dominio. Solo puede contener usuarios y grupos del MISMO dominio."},
+  {term:"Ámbito Universal",def:"Grupos utilizables en cualquier dominio del bosque. Ideal para compartir acceso entre múltiples dominios. Puede contener usuarios, grupos globales y otros grupos universales."},
+  {term:"OU (Unidad Organizativa)",def:"Contenedores lógicos en Active Directory para organizar usuarios, grupos, equipos y otros objetos. Se usan para reflejar la jerarquía administrativa: departamentos, ubicaciones geográficas, roles."},
+  {term:"GPO (Group Policy Object)",def:"Objeto de Directiva de Grupo vinculado a una OU. Permite configurar restricciones y configuraciones de seguridad para usuarios y equipos dentro de esa OU. Se gestiona desde 'Administración de directivas de grupo'."},
+  {term:"Proceso (en SO)",def:"Programa en ejecución que requiere recursos: CPU, memoria y dispositivos E/S. El SO gestiona los procesos mediante el PCB y los organiza según su estado y prioridad."},
+  {term:"PCB (Process Control Block)",def:"Estructura de datos que representa un proceso en el SO. Contiene: apuntador, estado del proceso, número de proceso, contador de programa, registros, límites de memoria y lista de archivos abiertos."},
+  {term:"Estados de un proceso",def:"Nuevo (creación) → Preparado (esperando CPU) → Ejecución (usando CPU) → Bloqueado (esperando evento/E/S) → Terminado. Windows llama 'terminado' cuando la llamada al sistema o excepción finaliza el proceso."},
+  {term:"Planificación expulsiva vs no expulsiva",def:"Expulsiva (apropiativa): el SO puede desalojar un proceso de la CPU antes de que termine (Round Robin, SRTF, Windows). No expulsiva: el proceso no puede ser desalojado hasta que termina voluntariamente (FCFS, SJF)."},
+  {term:"Algoritmos FCFS, SJF, SRTF, Round Robin",def:"FCFS/FIFO: primero en entrar, primero en salir (no expulsivo). SJF: el más corto primero (no expulsivo). SRTF: como SJF pero interrumpe si llega uno más corto (expulsivo). RR: porciones iguales de CPU para todos (expulsivo)."},
+  {term:"Modelo OSI — 7 capas",def:"1-Física (bits, cables), 2-Enlace datos (MAC, ARP), 3-Red (IP, routing), 4-Transporte (TCP/UDP), 5-Sesión (SMB, VPN), 6-Presentación (SSL/TLS, cifrado), 7-Aplicación (HTTP, DNS, DHCP). En la práctica se usa TCP/IP."},
+  {term:"TCP vs UDP",def:"TCP: orientado a conexión, handshake previo, paquetes en orden garantizado, reenvío si se pierde. Para web, correo, transferencia archivos. UDP: sin conexión, más rápido, sin garantías. Para streaming, videollamadas, juegos online."},
+  {term:"Regla clave del enrutamiento",def:"EN CADA SALTO DEL ROUTER: la dirección MAC CAMBIA (se actualiza), pero la dirección IP DEL EMISOR Y RECEPTOR SE MANTIENE. ARP resuelve el próximo salto MAC consultando la tabla de enrutamiento."},
+  {term:"DNS (Domain Name System)",def:"Proporciona resolución de nombres de dominio a IPs. Un cliente envía el nombre de host, el servidor DNS responde con la IP. Si no sabe la respuesta, consulta a otro servidor DNS (proceso recursivo)."},
+  {term:"Zona de búsqueda directa",def:"En DNS: traduce nombre de dominio → dirección IP. Tipo de registros: A (IPv4) y AAAA (IPv6). Es el tipo de zona más común. Ej: www.empresa.local → 192.168.1.102"},
+  {term:"Zona de búsqueda inversa",def:"En DNS: traduce dirección IP → nombre de dominio. Registros tipo PTR (Pointer Record). Útil para auditorías de seguridad. Ej: 192.168.1.10 → www.empresa.local. Se crea con los 3 primeros octetos de la red."},
+  {term:"Registro A (Host nuevo) en DNS",def:"Para crear un registro en DNS: Nombre del host (ej. www), FQDN generado automáticamente (www.prueba.local), Dirección IP (192.168.68.51), opción de crear registro PTR asociado para búsqueda inversa."},
+  {term:"nslookup",def:"Herramienta de diagnóstico DNS en CMD. Búsqueda directa: nslookup www.prueba.local → devuelve IP. Búsqueda inversa: nslookup 192.168.68.51 → devuelve nombre de dominio. Útil para verificar la configuración DNS."},
+];
+
+let fcIndex=0, fcScores={bien:0,mal:0};
+let fcOrder=[...Array(FLASHCARDS.length).keys()];
+
+function renderCard() {
+  const c=FLASHCARDS[fcOrder[fcIndex]];
+  document.getElementById('fc-term').textContent=c.term;
+  document.getElementById('fc-def').textContent=c.def;
+  document.getElementById('fc-current').textContent=fcIndex+1;
+  document.getElementById('fc-progress').style.width=((fcIndex+1)/FLASHCARDS.length*100)+'%';
+  document.getElementById('card-scene').classList.remove('flipped');
+}
+
+function flipCard() { playSound('flip'); document.getElementById('card-scene').classList.toggle('flipped'); }
+function nextCard() { if(fcIndex<FLASHCARDS.length-1){fcIndex++;renderCard();} }
+function prevCard() { if(fcIndex>0){fcIndex--;renderCard();} }
+
+function markCard(r) {
+  fcScores[r]++;
+  document.getElementById('fc-'+r).textContent=(r==='bien'?'✓ ':'✗ ')+fcScores[r];
+  if(r==='bien'){
+    gainXP(10,'⚡'); fcXpGained+=10;
+    document.getElementById('fc-xp-tag').textContent=`⚡ ${fcXpGained} XP ganados`;
+    playSound('correct');
+    const m=document.getElementById('mascot');
+    m.classList.remove('happy','sad'); void m.offsetWidth; m.classList.add('happy');
+    setTimeout(()=>m.classList.remove('happy'),600);
+  } else {
+    playSound('wrong');
+    const m=document.getElementById('mascot');
+    m.classList.remove('happy','sad'); void m.offsetWidth; m.classList.add('sad');
+    setTimeout(()=>m.classList.remove('sad'),600);
+  }
+  nextCard();
+}
+
+function shuffleCards() {
+  for(let i=fcOrder.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[fcOrder[i],fcOrder[j]]=[fcOrder[j],fcOrder[i]];}
+  fcIndex=0; renderCard();
+}
+
+function resetCards() {
+  fcIndex=0; fcScores={bien:0,mal:0}; fcOrder=[...Array(FLASHCARDS.length).keys()];
+  document.getElementById('fc-bien').textContent='✓ 0';
+  document.getElementById('fc-mal').textContent='✗ 0';
+  fcXpGained=0; document.getElementById('fc-xp-tag').textContent='⚡ 0 XP ganados';
+  renderCard();
+}
+renderCard();
+
+// ═══════════════════════════════════════════
+// TEST DATA
+// ═══════════════════════════════════════════
+const QUESTIONS = [
+  {q:"¿Cuál de las siguientes afirmaciones sobre la cuenta de usuario INVITADO es CORRECTA?",opts:["Puede instalar software pero no hardware","No puede instalar SW/HW ni cambiar configuración del sistema ni crear contraseña","Es igual que la cuenta estándar pero sin nombre","Tiene acceso a todos los archivos del equipo"],correct:1,exp:"La <strong>cuenta de invitado</strong> es la más restringida: no puede instalar SW/HW, no puede cambiar la configuración del sistema y no puede crear una contraseña propia. Es para acceso temporal."},
+  {q:"En un entorno Windows Server con Active Directory, ¿qué tipo de grupo debes usar para ASIGNAR PERMISOS a recursos compartidos?",opts:["Grupo de distribución","Grupo de correo","Grupo de seguridad","Grupo universal de distribución"],correct:2,exp:"Los <strong>grupos de seguridad</strong> se usan para asignar derechos y permisos a grupos de usuarios y equipos. Los grupos de distribución solo sirven para envío de correo electrónico, NO para seguridad."},
+  {q:"Tienes un servidor DNS Windows Server y quieres que 'servidor.empresa.local' resuelva a '192.168.1.50'. ¿Qué tipo de registro DNS debes crear?",opts:["Registro PTR","Registro MX","Registro A (Host)","Registro CNAME"],correct:2,exp:"El <strong>registro A (Host nuevo)</strong> en la zona de búsqueda directa mapea un nombre de host a una dirección IPv4. PTR es para la inversa (IP→nombre). MX es para correo. CNAME es para alias."},
+  {q:"En el modelo OSI, cuando un paquete atraviesa un router, ¿qué ocurre con las direcciones MAC e IP?",opts:["Ambas cambian en cada salto","La MAC cambia, la IP permanece igual","La IP cambia, la MAC permanece igual","Ambas permanecen iguales durante todo el trayecto"],correct:1,exp:"<strong>Clave del enrutamiento:</strong> en CADA SALTO del router, la dirección MAC CAMBIA (se recalcula para el siguiente tramo), pero las IPs de origen y destino PERMANECEN invariables durante todo el recorrido."},
+  {q:"¿Qué algoritmo de planificación de procesos es el que usa Windows?",opts:["FCFS puro (First Come First Served)","SJF (Shortest Job First)","Round Robin con Prioridades Dinámicas","SRTF (Shortest Remaining Time First)"],correct:2,exp:"<strong>Windows</strong> utiliza una combinación de <strong>Round Robin (RR) con Prioridades Dinámicas</strong>. Es un algoritmo expulsivo (apropiativo): un proceso puede ser interrumpido si llega otro de mayor prioridad."},
+  {q:"¿Cuál es la diferencia principal entre los ámbitos GLOBAL y LOCAL DE DOMINIO en grupos de AD?",opts:["No hay diferencia, son sinónimos","Global: visible en todos los dominios del bosque. Local: solo en el dominio donde se crea","Local: visible en todos los dominios. Global: solo en el dominio local","Global solo contiene equipos, Local solo contiene usuarios"],correct:1,exp:"<strong>Ámbito Global:</strong> visible en todos los dominios del bosque, pero solo puede contener objetos del MISMO dominio. <strong>Local de dominio:</strong> solo visible en el dominio donde se crea, pero puede contener objetos de otros dominios."},
+  {q:"¿Cuándo se debe usar UDP en lugar de TCP para una aplicación?",opts:["Cuando necesitamos que todos los paquetes lleguen en orden y sin pérdidas","Para transferencias de archivos importantes","Cuando la velocidad es más importante que la fiabilidad, como en videollamadas o juegos online","Cuando la seguridad es prioritaria"],correct:2,exp:"<strong>UDP</strong> se usa cuando la velocidad importa más que la integridad: videollamadas, streaming de vídeo, juegos online. La pérdida de algún paquete es tolerable. <strong>TCP</strong> garantiza entrega ordenada y completa, ideal para web y transferencias."},
+  {q:"¿Qué comando usarías para ELIMINAR un usuario en Active Directory desde la línea de comandos?",opts:["dsadd user","dsmod user","dsrm","dsget user"],correct:2,exp:"<strong>dsrm</strong> elimina objetos del Active Directory. Sintaxis: dsrm 'nombre_distinguido_del_usuario'. Los demás: dsadd (crear), dsmod (modificar), dsget (obtener información)."},
+  {q:"¿Qué capa del modelo OSI se encarga de la traducción, cifrado (SSL/TLS) y compresión de datos?",opts:["Capa 4 — Transporte","Capa 7 — Aplicación","Capa 5 — Sesión","Capa 6 — Presentación"],correct:3,exp:"La <strong>Capa 6 — Presentación</strong> se ocupa de la traducción de datos entre formatos, el cifrado/descifrado (SSL/TLS) y la compresión. La capa 7 (Aplicación) proporciona servicios de red al usuario final (HTTP, DNS, FTP)."},
+  {q:"¿Cuál es el formato correcto de un UPN (User Principal Name) en Windows Server?",opts:["nombre\\dominio","dominio/nombre","nombre@dominio.local","nombre.dominio"],correct:2,exp:"El <strong>UPN</strong> tiene el formato <strong>usuario@dominio</strong>, similar a una dirección de correo. Ejemplo: godofredo@iesromerovargas.local. El sufijo principal (@iesromerovargas.local) se genera automáticamente basado en el dominio del controlador."},
+];
+
+let qIndex=0, qCorrect=0, qWrong=0, qAnswered=false;
+let qOrder=[...Array(QUESTIONS.length).keys()];
+let lives=3;
+
+function renderHearts() { for(let i=1;i<=3;i++) document.getElementById('h'+i).classList.toggle('lost', i > lives); }
+
+function renderQuestion() {
+  const q=QUESTIONS[qOrder[qIndex]];
+  document.getElementById('q-num').textContent=qIndex+1;
+  document.getElementById('q-correct').textContent=qCorrect;
+  document.getElementById('q-wrong').textContent=qWrong;
+  document.getElementById('q-label').textContent='PREGUNTA '+String(qIndex+1).padStart(2,'0');
+  document.getElementById('q-text').textContent=q.q;
+  const optsEl=document.getElementById('q-options');
+  optsEl.innerHTML='';
+  q.opts.forEach((opt,i) => {
+    const div=document.createElement('div');
+    div.className='option';
+    div.innerHTML=`<span class="option-letter">${['A','B','C','D'][i]}</span><span>${opt}</span>`;
+    div.onclick=()=>answerQuestion(i,div);
+    optsEl.appendChild(div);
+  });
+  document.getElementById('question-card').classList.remove('correct-border','wrong-border');
+  document.getElementById('q-explanation').classList.remove('show');
+  document.getElementById('btn-next-q').style.display='none';
+  qAnswered=false;
+}
+
+function answerQuestion(selected) {
+  if(qAnswered) return;
+  qAnswered=true;
+  const q=QUESTIONS[qOrder[qIndex]];
+  const opts=document.querySelectorAll('.option');
+  const correct=selected===q.correct;
+  opts.forEach((o,i)=>{
+    o.classList.add('disabled');
+    if(i===q.correct) o.classList.add('correct');
+    else if(i===selected&&!correct) o.classList.add('wrong');
+  });
+  const qcard=document.getElementById('question-card');
+  if(correct){
+    qCorrect++;
+    qcard.classList.add('correct-border');
+    const xpGain=10*getComboMultiplier();
+    gainXP(xpGain, combo>=2?`🔥 x${getComboMultiplier()}`:'⚡');
+    testXpGained+=xpGain;
+    playSound('correct');
+    if(combo>=2) spawnConfetti(20);
+  } else {
+    qWrong++;
+    qcard.classList.add('wrong-border');
+    lives=Math.max(0,lives-1);
+    renderHearts();
+    playSound('wrong');
+  }
+  updateStreak(correct);
+  mascotReact(correct);
+  document.getElementById('q-correct').textContent=qCorrect;
+  document.getElementById('q-wrong').textContent=qWrong;
+  const exp=document.getElementById('q-explanation');
+  exp.innerHTML='💡 '+q.exp;
+  exp.classList.add('show');
+  if(qIndex<QUESTIONS.length-1) document.getElementById('btn-next-q').style.display='inline-block';
+  else setTimeout(showResults,1200);
+}
+
+function nextQuestion() { qIndex++; renderQuestion(); }
+
+function showResults() {
+  document.getElementById('test-body').style.display='none';
+  document.getElementById('result-box').classList.add('show');
+  const pct=Math.round(qCorrect/QUESTIONS.length*100);
+  document.getElementById('result-score').textContent=pct+'%';
+  document.getElementById('result-xp').textContent=`⚡ +${testXpGained} XP ganados en este test`;
+  let label,color,emoji;
+  if(pct>=80){label='🎉 ¡Dominas la Unidad 2! Listo para el examen';color='var(--success)';emoji='🦉🏆';spawnConfetti(80);}
+  else if(pct>=60){label='📖 Bien, repasa grupos, OSI y DNS antes del examen';color='var(--warn)';emoji='💪';}
+  else{label='🔁 Vuelve al resumen y dale otra vez. ¡Tú puedes!';color='var(--danger)';emoji='📚';}
+  document.getElementById('result-score').style.color=color;
+  document.getElementById('result-mascot').textContent=emoji;
+  document.getElementById('result-label').textContent=qCorrect+' correctas de '+QUESTIONS.length+' — '+label;
+}
+
+function resetTest(){
+  qIndex=0;qCorrect=0;qWrong=0;qAnswered=false;lives=3;combo=0;testXpGained=0;
+  renderHearts();updateCombo();
+  for(let i=qOrder.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[qOrder[i],qOrder[j]]=[qOrder[j],qOrder[i]];}
+  document.getElementById('test-body').style.display='block';
+  document.getElementById('result-box').classList.remove('show');
+  document.getElementById('mascot-bubble-test').textContent='¡Hora del examen! Cuentas de usuario, grupos, OSI, DNS... ¡Demuéstrame lo que sabes! 🎯';
+  renderQuestion();
+}
+renderQuestion();
+
+// ── RESUMEN TOGGLE ──
+function toggleSection(hdr) { hdr.parentElement.classList.toggle('open'); }
+
+// ═══════════════════════════════════════════
+// CHAT IA
+// ═══════════════════════════════════════════
+const SYSTEM_PROMPT = `Eres Byte, un tutor experto y amigable en Implantación de Sistemas Operativos del ciclo ASIR. Ayudas al alumno a estudiar la Unidad 2: "Configurar el Software de Base, Analizando las Necesidades de Explotación del Sistema Informático".
+
+Contenido de la unidad:
+- Cuentas de usuario: tipos (estándar, administrador, invitado), diferencias, cuándo usar cada una
+- Cuentas en Windows Server / Active Directory: UPN, nombre distinguido (DN), CN/OU/DC
+- Estrategias de nomenclatura para cuentas
+- Contraseñas: requisitos, buenas prácticas, técnica acrónimo alfanumérico
+- Opciones de cuenta: cambiar contraseña, no puede cambiar, nunca expira, deshabilitada
+- Creación y administración desde GUI (MMC, Usuarios y Equipos de AD) y CMD (dsadd, dsmod, dsrm, dsmove, dsget)
+- Creación masiva: CSVDE y LDIFDE
+- Grupos: distribución vs seguridad. Ámbitos: local de dominio, global, universal
+- OUs (Unidades Organizativas): usos, estructura jerárquica
+- GPOs (Group Policy Objects): qué son, cómo se vinculan a OUs
+- Gestión de procesos: qué es un proceso, PCB, estados (nuevo/preparado/ejecución/bloqueado/terminado)
+- Administrador de Tareas de Windows: pestañas Procesos, Rendimiento, etc.
+- Algoritmos de planificación: FCFS/FIFO (no expulsivo), SJF (no expulsivo), SRTF (expulsivo), Round Robin (expulsivo), Windows=RR+Prioridades Dinámicas
+- Comandos: tasklist, taskkill, Get-Process PowerShell
+- Modelo OSI 7 capas: Física (1), Enlace datos (2, MAC, ARP), Red (3, IP, enrutamiento), Transporte (4, TCP/UDP), Sesión (5, SMB, VPN), Presentación (6, SSL/TLS), Aplicación (7, HTTP, DNS, DHCP)
+- REGLA CLAVE: en cada salto del router la MAC cambia, la IP se mantiene
+- TCP vs UDP: TCP=conexión, fiable, ordenado. UDP=sin conexión, rápido, sin garantías
+- Modelo TCP/IP: 4 capas. Comparativa OSI vs TCP/IP
+- Transmisión: Unicast, Broadcast (ARP), Multicast (streaming)
+- DNS en Windows Server: zonas directa e inversa, registros A y PTR, configurar cliente, nslookup
+- Pasos para configurar DNS: instalar rol, crear zonas, añadir registros A, configurar cliente, verificar con nslookup
+
+Responde de forma clara y pedagógica. Usa emojis ocasionalmente. Señala qué conceptos suelen caer en examen. Sé conciso pero completo.`;
+
+let chatHistory = [];
+let apiKey = sessionStorage.getItem('studyos_key') || '';
+if(apiKey) document.getElementById('api-key-input').value = apiKey;
+
+function saveKey() {
+  const k=document.getElementById('api-key-input').value.trim();
+  if(!k) return;
+  apiKey=k; sessionStorage.setItem('studyos_key',k);
+  addMsg('system','✓ API key guardada. ¡Ya puedes preguntarme sobre la Unidad 2, Byte al habla! 🦉');
+}
+
+function addMsg(role, text) {
+  const win=document.getElementById('chat-window');
+  const emp=document.getElementById('chat-empty');
+  if(emp) emp.remove();
+  const div=document.createElement('div');
+  if(role==='user'){ div.className='msg msg-user'; div.innerHTML=`<div class="msg-sender">TÚ</div>${text}`; }
+  else { div.className='msg msg-ai'; div.innerHTML=`<div class="msg-sender">${role==='system'?'SISTEMA':'BYTE 🦉'}</div>${fmt(text)}`; }
+  win.appendChild(div); win.scrollTop=win.scrollHeight;
+}
+
+function fmt(t) {
+  return t.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/`(.*?)`/g,'<code>$1</code>').replace(/\n/g,'<br>');
+}
+
+function addTyping() {
+  const win=document.getElementById('chat-window');
+  const d=document.createElement('div');
+  d.className='msg msg-ai'; d.id='typing-ind';
+  d.innerHTML=`<div class="msg-sender">BYTE 🦉</div><div class="typing"><span></span><span></span><span></span></div>`;
+  win.appendChild(d); win.scrollTop=win.scrollHeight;
+}
+
+async function sendChat() {
+  const input=document.getElementById('chat-input');
+  const text=input.value.trim();
+  if(!text) return;
+  if(!apiKey){ addMsg('system','⚠️ Introduce tu API key primero.'); return; }
+  input.value='';
+  addMsg('user',text);
+  chatHistory.push({role:'user',content:text});
+  addTyping();
+  try {
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:SYSTEM_PROMPT,messages:chatHistory})
+    });
+    const data=await res.json();
+    const ind=document.getElementById('typing-ind'); if(ind) ind.remove();
+    if(data.error){ addMsg('system','⚠️ Error: '+data.error.message); chatHistory.pop(); return; }
+    const reply=data.content[0].text;
+    chatHistory.push({role:'assistant',content:reply});
+    addMsg('ai',reply);
+  } catch(err) {
+    const ind=document.getElementById('typing-ind'); if(ind) ind.remove();
+    addMsg('system','⚠️ Error de red: '+err.message); chatHistory.pop();
+  }
+}
+
+function sendSuggestion(btn) { document.getElementById('chat-input').value=btn.textContent; sendChat(); }
+function chatKeyDown(e) { if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendChat();} }
+
+// ── NAV ──
+function switchView(view, btn) {
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('view-'+view).classList.add('active');
+  if(btn) btn.classList.add('active');
+}
+</script>
+</body>
+</html>

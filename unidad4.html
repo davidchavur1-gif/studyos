@@ -1,0 +1,1007 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StudyOS — ASIR Unidad 4 · Linux · Discos · RAID · LVM</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #080b12;
+    --surface: #0f1219;
+    --surface2: #161b26;
+    --surface3: #1e2535;
+    --border: #252d40;
+    --accent: #00e5ff;
+    --accent-dim: rgba(0,229,255,0.12);
+    --accent2: #a78bfa;
+    --accent3: #34d399;
+    --warn: #fb923c;
+    --danger: #f87171;
+    --success: #34d399;
+    --xp-color: #facc15;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --muted2: #94a3b8;
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'Syne', sans-serif;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: var(--sans); min-height: 100vh; overflow-x: hidden; }
+  body::after { content: ''; position: fixed; inset: 0; background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px); pointer-events: none; z-index: 9999; }
+  body::before { content: ''; position: fixed; inset: 0; background-image: linear-gradient(rgba(0,229,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0,229,255,0.03) 1px, transparent 1px); background-size: 40px 40px; pointer-events: none; }
+
+  header { padding: 14px 32px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; background: rgba(8,11,18,0.95); backdrop-filter: blur(12px); position: sticky; top: 0; z-index: 100; flex-wrap: wrap; gap: 10px; }
+  .logo { font-family: var(--mono); font-size: 18px; font-weight: 700; color: var(--accent); display: flex; align-items: center; gap: 10px; }
+  .logo-dot { width: 8px; height: 8px; background: var(--accent); border-radius: 50%; box-shadow: 0 0 10px var(--accent); animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.3} }
+  .unit-badge { font-family: var(--mono); font-size: 11px; color: var(--muted); background: var(--surface2); border: 1px solid var(--border); padding: 4px 10px; border-radius: 4px; letter-spacing: 1px; }
+  .xp-bar-wrap { display: flex; align-items: center; gap: 10px; }
+  .xp-label { font-family: var(--mono); font-size: 11px; color: var(--xp-color); font-weight: 700; letter-spacing: 1px; white-space: nowrap; }
+  .xp-track { width: 140px; height: 10px; background: var(--surface3); border-radius: 10px; overflow: hidden; border: 1px solid var(--border); }
+  .xp-fill { height: 100%; background: linear-gradient(90deg, var(--xp-color), #f97316); border-radius: 10px; transition: width 0.5s cubic-bezier(0.4,0,0.2,1); box-shadow: 0 0 8px rgba(250,204,21,0.5); }
+  .xp-count { font-family: var(--mono); font-size: 11px; color: var(--xp-color); }
+  .streak-badge { display: flex; align-items: center; gap: 4px; background: rgba(251,146,60,0.15); border: 1px solid rgba(251,146,60,0.3); border-radius: 20px; padding: 4px 10px; font-family: var(--mono); font-size: 12px; font-weight: 700; color: var(--warn); }
+
+  nav { display: flex; gap: 4px; padding: 16px 32px; border-bottom: 1px solid var(--border); background: var(--surface); flex-wrap: wrap; }
+  .nav-btn { font-family: var(--mono); font-size: 12px; font-weight: 600; padding: 8px 18px; border-radius: 6px; border: 1px solid transparent; cursor: pointer; background: transparent; color: var(--muted); letter-spacing: 0.5px; transition: all 0.2s; }
+  .nav-btn:hover { color: var(--text); background: var(--surface2); }
+  .nav-btn.active { color: var(--accent); background: var(--accent-dim); border-color: rgba(0,229,255,0.3); }
+
+  main { max-width: 900px; margin: 0 auto; padding: 40px 24px; }
+  .view { display: none; animation: fadeIn 0.3s ease; }
+  .view.active { display: block; }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)} }
+  .section-title { font-size: 28px; font-weight: 800; margin-bottom: 8px; letter-spacing: -0.5px; }
+  .section-sub { font-family: var(--mono); font-size: 12px; color: var(--muted); margin-bottom: 32px; letter-spacing: 0.5px; }
+
+  .mascot-wrap { display: flex; align-items: flex-end; gap: 20px; margin-bottom: 28px; }
+  .mascot { font-size: 52px; animation: mascot-idle 3s ease-in-out infinite; cursor: pointer; filter: drop-shadow(0 0 12px rgba(0,229,255,0.3)); user-select: none; transition: transform 0.1s; flex-shrink: 0; }
+  .mascot:active { transform: scale(0.9); }
+  @keyframes mascot-idle { 0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-6px) rotate(2deg)} }
+  .mascot.happy { animation: mascot-happy 0.5s ease; }
+  @keyframes mascot-happy { 0%{transform:scale(1)}25%{transform:scale(1.3) rotate(-10deg)}50%{transform:scale(1.2) rotate(10deg)}75%{transform:scale(1.1) rotate(-5deg)}100%{transform:scale(1)} }
+  .mascot.sad { animation: mascot-sad 0.5s ease; }
+  @keyframes mascot-sad { 0%{transform:translateX(0)}25%{transform:translateX(-8px)}50%{transform:translateX(8px)}75%{transform:translateX(-4px)}100%{transform:translateX(0)} }
+  .mascot-bubble { background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; border-bottom-left-radius: 3px; padding: 12px 16px; font-size: 14px; color: var(--muted2); line-height: 1.5; max-width: 480px; position: relative; transition: all 0.3s; }
+  .mascot-bubble::before { content: ''; position: absolute; left: -8px; bottom: 10px; border: 6px solid transparent; border-right-color: var(--border); }
+  .mascot-bubble::after { content: ''; position: absolute; left: -6px; bottom: 11px; border: 5px solid transparent; border-right-color: var(--surface2); }
+  .mascot-name { font-family: var(--mono); font-size: 10px; color: var(--accent); letter-spacing: 1px; margin-bottom: 4px; font-weight: 700; }
+
+  .lives-wrap { display: flex; align-items: center; gap: 6px; margin-bottom: 20px; }
+  .heart { font-size: 20px; transition: all 0.3s; }
+  .heart.lost { filter: grayscale(1); opacity: 0.3; animation: heart-lost 0.4s ease; }
+  @keyframes heart-lost { 0%{transform:scale(1)}50%{transform:scale(0.5) rotate(20deg)}100%{transform:scale(1)} }
+  .lives-label { font-family: var(--mono); font-size: 11px; color: var(--muted); margin-left: 4px; }
+
+  .flashcard-controls { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+  .progress-text { font-family: var(--mono); font-size: 13px; color: var(--muted2); }
+  .progress-bar { width: 200px; height: 6px; background: var(--surface3); border-radius: 3px; overflow: hidden; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 3px; transition: width 0.4s ease; box-shadow: 0 0 8px var(--accent); }
+  .card-scene { perspective: 1200px; height: 300px; margin-bottom: 24px; cursor: pointer; }
+  .card-inner { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; transition: transform 0.5s cubic-bezier(0.4,0,0.2,1); }
+  .card-scene.flipped .card-inner { transform: rotateY(180deg); }
+  .card-face { position: absolute; inset: 0; backface-visibility: hidden; border-radius: 16px; border: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px; text-align: center; }
+  .card-front { background: var(--surface); background-image: radial-gradient(circle at 30% 20%, rgba(0,229,255,0.05) 0%, transparent 60%); }
+  .card-back { background: var(--surface2); background-image: radial-gradient(circle at 70% 80%, rgba(167,139,250,0.08) 0%, transparent 60%); transform: rotateY(180deg); }
+  .card-label { font-family: var(--mono); font-size: 10px; letter-spacing: 2px; color: var(--muted); margin-bottom: 16px; text-transform: uppercase; }
+  .card-front .card-label { color: var(--accent); }
+  .card-back .card-label { color: var(--accent2); }
+  .card-term { font-size: 22px; font-weight: 700; line-height: 1.4; }
+  .card-def { font-size: 14px; line-height: 1.6; color: var(--muted2); max-width: 620px; }
+  .card-hint { font-family: var(--mono); font-size: 11px; color: var(--muted); margin-top: 20px; opacity: 0.6; }
+  .card-nav { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .btn { font-family: var(--mono); font-size: 12px; font-weight: 700; padding: 10px 24px; border-radius: 10px; border: 1px solid var(--border); cursor: pointer; transition: all 0.2s; letter-spacing: 0.5px; }
+  .btn-primary { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+  .btn-primary:hover { box-shadow: 0 0 20px rgba(0,229,255,0.4); transform: translateY(-2px); }
+  .btn-secondary { background: var(--surface2); color: var(--text); }
+  .btn-secondary:hover { background: var(--surface3); border-color: var(--muted); transform: translateY(-1px); }
+  .btn-success { background: rgba(52,211,153,0.15); color: var(--success); border-color: rgba(52,211,153,0.4); }
+  .btn-success:hover { background: rgba(52,211,153,0.25); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(52,211,153,0.2); }
+  .btn-danger { background: rgba(248,113,113,0.15); color: var(--danger); border-color: rgba(248,113,113,0.4); }
+  .btn-danger:hover { background: rgba(248,113,113,0.25); transform: translateY(-2px); }
+  .tag { display: inline-block; font-family: var(--mono); font-size: 10px; padding: 2px 8px; border-radius: 4px; letter-spacing: 0.5px; font-weight: 600; }
+  .tag-cyan { background: rgba(0,229,255,0.12); color: var(--accent); }
+  .tag-purple { background: rgba(167,139,250,0.12); color: var(--accent2); }
+  .tag-green { background: rgba(52,211,153,0.12); color: var(--accent3); }
+  .tag-orange { background: rgba(251,146,60,0.12); color: var(--warn); }
+  .tag-xp { background: rgba(250,204,21,0.15); color: var(--xp-color); border: 1px solid rgba(250,204,21,0.3); }
+
+  .xp-popup { position: fixed; top: 80px; right: 24px; background: rgba(250,204,21,0.15); border: 2px solid var(--xp-color); border-radius: 12px; padding: 10px 20px; font-family: var(--mono); font-size: 16px; font-weight: 700; color: var(--xp-color); z-index: 9998; opacity: 0; transform: translateY(10px); transition: all 0.3s; pointer-events: none; }
+  .xp-popup.show { opacity: 1; transform: translateY(0); }
+
+  .confetti-piece { position: fixed; width: 10px; height: 10px; border-radius: 2px; pointer-events: none; z-index: 9997; animation: confetti-fall 1.5s ease-in forwards; }
+  @keyframes confetti-fall { 0%{transform:translateY(-20px) rotate(0deg);opacity:1} 100%{transform:translateY(100vh) rotate(720deg);opacity:0} }
+
+  .test-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
+  .test-score { font-family: var(--mono); font-size: 13px; color: var(--muted2); }
+  .question-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 32px; margin-bottom: 20px; transition: border-color 0.3s; }
+  .question-card.correct-border { border-color: var(--success); box-shadow: 0 0 20px rgba(52,211,153,0.15); }
+  .question-card.wrong-border { border-color: var(--danger); box-shadow: 0 0 20px rgba(248,113,113,0.15); }
+  .question-num { font-family: var(--mono); font-size: 11px; letter-spacing: 1px; color: var(--accent); margin-bottom: 12px; }
+  .question-text { font-size: 17px; font-weight: 600; line-height: 1.5; margin-bottom: 24px; }
+  .options { display: flex; flex-direction: column; gap: 10px; }
+  .option { padding: 14px 18px; border-radius: 10px; border: 2px solid var(--border); background: var(--surface2); cursor: pointer; font-size: 14px; line-height: 1.5; transition: all 0.2s; display: flex; align-items: flex-start; gap: 12px; }
+  .option:hover:not(.disabled) { border-color: var(--accent); background: var(--accent-dim); color: var(--accent); transform: translateX(4px); }
+  .option.correct { border-color: var(--success); background: rgba(52,211,153,0.1); color: var(--success); animation: option-correct 0.4s ease; }
+  .option.wrong { border-color: var(--danger); background: rgba(248,113,113,0.1); color: var(--danger); animation: option-wrong 0.4s ease; }
+  .option.disabled { cursor: default; }
+  @keyframes option-correct { 0%{transform:scale(1)}50%{transform:scale(1.02)}100%{transform:scale(1)} }
+  @keyframes option-wrong { 0%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}100%{transform:translateX(0)} }
+  .option-letter { font-family: var(--mono); font-size: 12px; font-weight: 700; min-width: 20px; opacity: 0.6; }
+  .explanation { margin-top: 16px; padding: 14px 18px; border-radius: 10px; background: rgba(167,139,250,0.08); border: 1px solid rgba(167,139,250,0.2); font-size: 13px; line-height: 1.6; color: var(--muted2); display: none; }
+  .explanation.show { display: block; animation: fadeIn 0.3s ease; }
+  .explanation strong { color: var(--accent2); }
+  .test-actions { display: flex; gap: 12px; margin-top: 16px; flex-wrap: wrap; }
+  .result-box { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 40px; text-align: center; display: none; }
+  .result-box.show { display: block; animation: fadeIn 0.5s ease; }
+  .result-score { font-size: 64px; font-weight: 800; font-family: var(--mono); margin-bottom: 8px; }
+  .result-label { font-size: 16px; color: var(--muted2); margin-bottom: 24px; }
+  .result-mascot { font-size: 80px; animation: mascot-happy 0.8s ease infinite alternate; display: block; margin-bottom: 16px; }
+  .result-xp { font-family: var(--mono); font-size: 14px; color: var(--xp-color); margin-top: 12px; }
+
+  .resumen-grid { display: grid; gap: 16px; }
+  .resumen-section { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; transition: border-color 0.2s; }
+  .resumen-section:hover { border-color: rgba(0,229,255,0.2); }
+  .resumen-header { padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: background 0.2s; user-select: none; }
+  .resumen-header:hover { background: var(--surface2); }
+  .resumen-title { font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+  .resumen-icon { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+  .resumen-chevron { font-size: 12px; color: var(--muted); transition: transform 0.3s; }
+  .resumen-section.open .resumen-chevron { transform: rotate(180deg); }
+  .resumen-body { padding: 0 20px; max-height: 0; overflow: hidden; transition: max-height 0.4s ease, padding 0.3s; }
+  .resumen-section.open .resumen-body { max-height: 3000px; padding: 0 20px 20px; }
+  .resumen-table { width: 100%; border-collapse: collapse; font-size: 13px; font-family: var(--mono); }
+  .resumen-table th { text-align: left; padding: 8px 12px; color: var(--accent); font-size: 11px; letter-spacing: 1px; border-bottom: 1px solid var(--border); }
+  .resumen-table td { padding: 8px 12px; border-bottom: 1px solid rgba(37,45,64,0.5); vertical-align: top; line-height: 1.6; color: var(--muted2); }
+  .resumen-table tr:last-child td { border-bottom: none; }
+  .resumen-table td:first-child { color: var(--text); font-weight: 600; white-space: nowrap; width: 180px; }
+  .resumen-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+  .resumen-list li { padding: 10px 14px; background: var(--surface2); border-radius: 8px; font-size: 13px; color: var(--muted2); line-height: 1.5; border-left: 3px solid var(--border); }
+  .resumen-list li strong { color: var(--text); }
+  .resumen-list li.cyan { border-left-color: var(--accent); }
+  .resumen-list li.purple { border-left-color: var(--accent2); }
+  .resumen-list li.green { border-left-color: var(--accent3); }
+  .resumen-list li.orange { border-left-color: var(--warn); }
+
+  /* CMD blocks */
+  .cmd-block { background: #0a0e1a; border: 1px solid var(--border); border-radius: 10px; padding: 14px 18px; font-family: var(--mono); font-size: 12px; color: var(--accent3); margin: 10px 0; line-height: 1.8; overflow-x: auto; }
+  .cmd-block .cmd-comment { color: var(--muted); }
+  .cmd-block .cmd-flag { color: var(--warn); }
+  .cmd-block .cmd-path { color: var(--accent2); }
+
+  /* LVM diagram */
+  .lvm-diagram { display: flex; align-items: center; gap: 12px; padding: 16px; background: var(--surface2); border-radius: 10px; margin: 10px 0; flex-wrap: wrap; justify-content: center; }
+  .lvm-box { padding: 10px 14px; border-radius: 8px; font-family: var(--mono); font-size: 11px; font-weight: 700; text-align: center; min-width: 70px; }
+  .lvm-pv { background: rgba(0,229,255,0.1); border: 1px solid var(--accent); color: var(--accent); }
+  .lvm-vg { background: rgba(52,211,153,0.1); border: 1px solid var(--accent3); color: var(--accent3); padding: 14px 20px; font-size: 13px; }
+  .lvm-lv { background: rgba(250,204,21,0.1); border: 1px solid var(--xp-color); color: var(--xp-color); }
+  .lvm-arrow { color: var(--muted); font-size: 18px; }
+
+  /* CHAT */
+  .api-setup { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-bottom: 24px; }
+  .api-label { font-family: var(--mono); font-size: 11px; color: var(--muted); letter-spacing: 1px; margin-bottom: 8px; display: block; }
+  .api-input-row { display: flex; gap: 10px; }
+  .api-input { flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; color: var(--text); font-family: var(--mono); font-size: 13px; outline: none; transition: border-color 0.2s; }
+  .api-input:focus { border-color: var(--accent); }
+  .api-input::placeholder { color: var(--muted); }
+  .chat-window { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; height: 400px; overflow-y: auto; padding: 20px; margin-bottom: 16px; display: flex; flex-direction: column; gap: 16px; scroll-behavior: smooth; }
+  .chat-window::-webkit-scrollbar { width: 4px; }
+  .chat-window::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  .msg { max-width: 80%; padding: 12px 16px; border-radius: 10px; font-size: 14px; line-height: 1.6; }
+  .msg-user { align-self: flex-end; background: var(--accent-dim); border: 1px solid rgba(0,229,255,0.2); color: var(--text); border-bottom-right-radius: 3px; }
+  .msg-ai { align-self: flex-start; background: var(--surface2); border: 1px solid var(--border); color: var(--muted2); border-bottom-left-radius: 3px; }
+  .msg-ai strong { color: var(--text); }
+  .msg-ai code { background: var(--surface3); padding: 1px 6px; border-radius: 4px; font-family: var(--mono); font-size: 12px; color: var(--accent); }
+  .msg-sender { font-family: var(--mono); font-size: 10px; letter-spacing: 1px; margin-bottom: 6px; opacity: 0.6; }
+  .chat-empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; color: var(--muted); }
+  .chat-suggestions { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+  .suggestion { font-family: var(--mono); font-size: 11px; padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface2); color: var(--muted2); cursor: pointer; transition: all 0.2s; }
+  .suggestion:hover { border-color: var(--accent); color: var(--accent); }
+  .chat-input-row { display: flex; gap: 10px; }
+  .chat-input { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; color: var(--text); font-family: var(--sans); font-size: 14px; outline: none; transition: border-color 0.2s; resize: none; height: 48px; }
+  .chat-input:focus { border-color: var(--accent); }
+  .chat-input::placeholder { color: var(--muted); }
+  .typing { display: flex; gap: 4px; align-items: center; padding: 4px 0; }
+  .typing span { width: 6px; height: 6px; background: var(--muted); border-radius: 50%; animation: blink 1.2s infinite; }
+  .typing span:nth-child(2){animation-delay:0.2s}
+  .typing span:nth-child(3){animation-delay:0.4s}
+  @keyframes blink { 0%,100%{opacity:0.3;transform:translateY(0)}50%{opacity:1;transform:translateY(-3px)} }
+
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(6px); z-index: 10000; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+  .modal-overlay.show { opacity: 1; pointer-events: all; }
+  .modal-box { background: var(--surface); border: 2px solid var(--xp-color); border-radius: 20px; padding: 40px; text-align: center; max-width: 360px; width: 90%; box-shadow: 0 0 60px rgba(250,204,21,0.3); animation: modal-in 0.4s cubic-bezier(0.4,0,0.2,1); }
+  @keyframes modal-in { from{transform:scale(0.7) translateY(20px);opacity:0}to{transform:scale(1) translateY(0);opacity:1} }
+  .modal-emoji { font-size: 72px; display: block; margin-bottom: 16px; animation: mascot-happy 0.6s ease infinite alternate; }
+  .modal-title { font-size: 24px; font-weight: 800; color: var(--xp-color); margin-bottom: 8px; }
+  .modal-sub { font-size: 14px; color: var(--muted2); margin-bottom: 24px; line-height: 1.5; }
+
+  .combo-wrap { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
+  .combo-count { font-family: var(--mono); font-size: 20px; font-weight: 800; color: var(--warn); }
+  .combo-label { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+  .combo-fire { font-size: 20px; animation: pulse 0.5s infinite; }
+</style>
+</head>
+<body>
+
+<div class="xp-popup" id="xp-popup">+10 XP ⚡</div>
+
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal-box">
+    <span class="modal-emoji" id="modal-emoji">🎉</span>
+    <div class="modal-title" id="modal-title">¡NIVEL SUBIDO!</div>
+    <div class="modal-sub" id="modal-sub">Sigue así, crack.</div>
+    <button class="btn btn-primary" onclick="closeModal()" style="margin-top:8px">¡Seguir aprendiendo! →</button>
+  </div>
+</div>
+
+<header>
+  <div style="display:flex;align-items:center;gap:16px;">
+    <div class="logo"><div class="logo-dot"></div>StudyOS</div>
+    <div class="unit-badge">ASIR · ISO · UNIDAD 4 · LINUX · DISCOS · RAID · LVM</div>
+  </div>
+  <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+    <div class="streak-badge">🔥 <span id="streak-count">0</span></div>
+    <div class="xp-bar-wrap">
+      <div class="xp-label">XP</div>
+      <div class="xp-track"><div class="xp-fill" id="xp-fill" style="width:0%"></div></div>
+      <div class="xp-count" id="xp-count">0 / 100</div>
+    </div>
+  </div>
+</header>
+
+<nav>
+  <button class="nav-btn active" onclick="switchView('flashcards',this)">⚡ Flashcards</button>
+  <button class="nav-btn" onclick="switchView('test',this)">📝 Test</button>
+  <button class="nav-btn" onclick="switchView('resumen',this)">📚 Resumen</button>
+  <button class="nav-btn" onclick="switchView('chat',this)">🤖 Chat IA</button>
+</nav>
+
+<main>
+
+<!-- ══════════ FLASHCARDS ══════════ -->
+<div id="view-flashcards" class="view active">
+  <div class="mascot-wrap">
+    <div class="mascot" id="mascot" onclick="mascotTalk()">🦉</div>
+    <div>
+      <div class="mascot-name">BYTE · TU TUTOR</div>
+      <div class="mascot-bubble" id="mascot-bubble">¡Unidad 4 al ataque! 🐧 Linux, particiones, RAID por software y LVM. ¡Esto sí que cae en el examen!</div>
+    </div>
+  </div>
+
+  <div class="section-title">Flashcards · Linux Discos RAID LVM</div>
+  <div class="section-sub">// CLICK EN LA TARJETA PARA VER LA DEFINICIÓN · <span id="fc-total">26</span> TARJETAS</div>
+  <div class="flashcard-controls">
+    <div class="progress-text">Tarjeta <span id="fc-current">1</span> / <span id="fc-total2">26</span></div>
+    <div class="progress-bar"><div class="progress-fill" id="fc-progress"></div></div>
+  </div>
+  <div class="card-scene" id="card-scene" onclick="flipCard()">
+    <div class="card-inner">
+      <div class="card-face card-front">
+        <div class="card-label">TÉRMINO</div>
+        <div class="card-term" id="fc-term">—</div>
+        <div class="card-hint">↩ click para ver definición</div>
+      </div>
+      <div class="card-face card-back">
+        <div class="card-label">DEFINICIÓN</div>
+        <div class="card-def" id="fc-def">—</div>
+      </div>
+    </div>
+  </div>
+  <div class="card-nav">
+    <button class="btn btn-secondary" onclick="prevCard()">← Anterior</button>
+    <button class="btn btn-danger" onclick="markCard('mal')">✗ No lo sé</button>
+    <button class="btn btn-success" onclick="markCard('bien')">✓ Lo sé</button>
+    <button class="btn btn-secondary" onclick="nextCard()">Siguiente →</button>
+  </div>
+  <div style="margin-top:20px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
+    <span class="tag tag-green" id="fc-bien">✓ 0</span>
+    <span class="tag tag-orange" id="fc-mal">✗ 0</span>
+    <span class="tag tag-xp" id="fc-xp-tag">⚡ 0 XP ganados</span>
+    <button class="btn btn-secondary" style="font-size:11px;padding:6px 14px" onclick="shuffleCards()">🔀 Barajar</button>
+    <button class="btn btn-secondary" style="font-size:11px;padding:6px 14px" onclick="resetCards()">↺ Reiniciar</button>
+  </div>
+</div>
+
+<!-- ══════════ TEST ══════════ -->
+<div id="view-test" class="view">
+  <div class="mascot-wrap">
+    <div class="mascot" id="mascot-test">🦉</div>
+    <div>
+      <div class="mascot-name">BYTE · TEST MODE</div>
+      <div class="mascot-bubble" id="mascot-bubble-test">¡Hora de demostrar lo que sabes sobre Linux! Comandos, particiones, RAID y LVM. ¡Sin trampa! 🐧</div>
+    </div>
+  </div>
+
+  <div class="lives-wrap" id="lives-wrap">
+    <span class="heart" id="h1">❤️</span>
+    <span class="heart" id="h2">❤️</span>
+    <span class="heart" id="h3">❤️</span>
+    <span class="lives-label">vidas</span>
+  </div>
+
+  <div class="combo-wrap" id="combo-wrap" style="display:none">
+    <span class="combo-count" id="combo-count">x2</span>
+    <span class="combo-fire">🔥</span>
+    <span class="combo-label">COMBO · XP x<span id="combo-multi">2</span></span>
+  </div>
+
+  <div class="section-title">Test Tipo Examen</div>
+  <div class="section-sub">// 10 PREGUNTAS · UNA SOLA RESPUESTA CORRECTA</div>
+  <div id="test-body">
+    <div class="test-header">
+      <div class="test-score">Pregunta <span id="q-num">1</span>/10</div>
+      <div class="test-score">✓ <span id="q-correct">0</span> &nbsp;|&nbsp; ✗ <span id="q-wrong">0</span></div>
+    </div>
+    <div class="question-card" id="question-card">
+      <div class="question-num" id="q-label">PREGUNTA 01</div>
+      <div class="question-text" id="q-text">—</div>
+      <div class="options" id="q-options"></div>
+      <div class="explanation" id="q-explanation"></div>
+    </div>
+    <div class="test-actions">
+      <button class="btn btn-primary" id="btn-next-q" onclick="nextQuestion()" style="display:none">Siguiente →</button>
+      <button class="btn btn-secondary" onclick="resetTest()">↺ Reiniciar</button>
+    </div>
+  </div>
+  <div class="result-box" id="result-box">
+    <span class="result-mascot" id="result-mascot">🎉</span>
+    <div class="result-score" id="result-score">—</div>
+    <div class="result-label" id="result-label">—</div>
+    <div class="result-xp" id="result-xp">⚡ +0 XP ganados en este test</div>
+    <button class="btn btn-primary" onclick="resetTest()" style="margin-top:24px">Repetir test →</button>
+  </div>
+</div>
+
+<!-- ══════════ RESUMEN ══════════ -->
+<div id="view-resumen" class="view">
+  <div class="section-title">Resumen · Unidad 4</div>
+  <div class="section-sub">// LINUX · ADMINISTRACIÓN DE DISCOS · RAID SOFTWARE · LVM</div>
+  <div class="resumen-grid">
+
+    <div class="resumen-section open">
+      <div class="resumen-header" onclick="toggleSection(this)">
+        <div class="resumen-title"><div class="resumen-icon" style="background:rgba(0,229,255,0.1)">💾</div>Administración de Discos — Conceptos</div>
+        <div class="resumen-chevron">▼</div>
+      </div>
+      <div class="resumen-body">
+        <table class="resumen-table">
+          <tr><th>Concepto</th><th>Definición</th></tr>
+          <tr><td>Disco</td><td>Dispositivo físico de almacenamiento (HDD, SSD, etc.)</td></tr>
+          <tr><td>Partición</td><td>División lógica del disco que actúa como disco independiente</td></tr>
+          <tr><td>Sistema de archivos</td><td>Estructura que organiza los datos dentro de una partición. ext4 es el más usado en Linux</td></tr>
+          <tr><td>Partición primaria</td><td>MBR: máx. 4 primarias · GPT: máx. 128 primarias</td></tr>
+          <tr><td>Partición extendida</td><td>Contenedor para crear más particiones en MBR (solo en MBR)</td></tr>
+          <tr><td>Partición lógica</td><td>Se crea dentro de la extendida. Solo en MBR. Hasta 23 lógicas (Linux suele permitir 15 en total)</td></tr>
+          <tr><td>/dev/sda</td><td>Primer disco duro SATA/SCSI</td></tr>
+          <tr><td>/dev/sda1</td><td>Primera partición del primer disco</td></tr>
+          <tr><td>/dev/sr0</td><td>Unidad de CD/DVD</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="resumen-section">
+      <div class="resumen-header" onclick="toggleSection(this)">
+        <div class="resumen-title"><div class="resumen-icon" style="background:rgba(52,211,153,0.1)">🔍</div>Comandos de Comprobación de Discos</div>
+        <div class="resumen-chevron">▼</div>
+      </div>
+      <div class="resumen-body">
+        <table class="resumen-table">
+          <tr><th>Comando</th><th>Qué hace</th></tr>
+          <tr><td>lsblk</td><td>Muestra discos y particiones en árbol (NAME, MAJ:MIN, RM, SIZE, RO, TYPE, MOUNTPOINT)</td></tr>
+          <tr><td>lsblk -f</td><td>Muestra además sistema de archivos, UUID y puntos de montaje</td></tr>
+          <tr><td>df -h</td><td>Espacio usado/libre en sistemas de archivos montados (human-readable)</td></tr>
+          <tr><td>fdisk -l</td><td>Lista detallada de particiones (esquema MBR/GPT, sectores, tipos)</td></tr>
+          <tr><td>parted -l</td><td>Información de discos y particiones (tabla, tamaño, flags, filesystem)</td></tr>
+          <tr><td>parted /dev/sdX print</td><td>Info solo del disco indicado</td></tr>
+        </table>
+        <div style="margin-top:12px">
+          <div style="font-family:var(--mono);font-size:11px;color:var(--accent);margin-bottom:6px">CAMPOS DE lsblk:</div>
+          <div class="cmd-block">NAME · MAJ:MIN · RM · SIZE · RO · TYPE · MOUNTPOINTS
+<span class="cmd-comment"># TYPE: disk (disco completo), part (partición), rom (CD/DVD), raid0/1/5...</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="resumen-section">
+      <div class="resumen-header" onclick="toggleSection(this)">
+        <div class="resumen-title"><div class="resumen-icon" style="background:rgba(167,139,250,0.1)">⚙️</div>Gestión de Particiones con parted</div>
+        <div class="resumen-chevron">▼</div>
+      </div>
+      <div class="resumen-body">
+        <ul class="resumen-list">
+          <li class="cyan"><strong>Requisitos para usar una partición:</strong> 1) Tabla de particiones en el disco (MBR o GPT) · 2) Formatear con sistema de archivos (ext4)</li>
+        </ul>
+        <div class="cmd-block" style="margin-top:12px">
+<span class="cmd-comment"># Crear tabla de particiones</span>
+parted <span class="cmd-path">/dev/sdX</span> mklabel msdos   <span class="cmd-comment"># → MBR</span>
+parted <span class="cmd-path">/dev/sdX</span> mklabel gpt     <span class="cmd-comment"># → GPT</span>
+
+<span class="cmd-comment"># Crear partición (1MiB = inicio, 500MiB = fin)</span>
+parted <span class="cmd-path">/dev/sdX</span> mkpart primary ext4 1MiB 500MiB
+parted <span class="cmd-path">/dev/sdX</span> mkpart primary ext4 1MiB 10%
+
+<span class="cmd-comment"># Segunda partición (el Start = End de la anterior)</span>
+parted <span class="cmd-path">/dev/sdX</span> mkpart primary ext4 1048MiB 2000MiB
+
+<span class="cmd-comment"># Eliminar partición nº 1</span>
+parted <span class="cmd-path">/dev/sdX</span> rm 1
+
+<span class="cmd-comment"># Redimensionar partición nº 2 hasta 800MiB (solo el End)</span>
+parted <span class="cmd-path">/dev/sdX</span> resizepart 2 800MiB
+
+<span class="cmd-comment"># Formatear partición con ext4</span>
+mkfs.ext4 <span class="cmd-path">/dev/sdX2</span></div>
+      </div>
+    </div>
+
+    <div class="resumen-section">
+      <div class="resumen-header" onclick="toggleSection(this)">
+        <div class="resumen-title"><div class="resumen-icon" style="background:rgba(251,146,60,0.1)">📁</div>Montaje y /etc/fstab</div>
+        <div class="resumen-chevron">▼</div>
+      </div>
+      <div class="resumen-body">
+        <ul class="resumen-list">
+          <li class="cyan"><strong>Montar</strong> = conectar la partición a una carpeta del sistema para leer/escribir. Desmontar NO borra datos, solo desconecta.</li>
+          <li class="orange"><strong>¡OJO!</strong> Si una partición está montada, NO se puede redimensionar. Hay que desmontarla primero con <code>umount</code>.</li>
+        </ul>
+        <div class="cmd-block" style="margin-top:12px">
+<span class="cmd-comment"># Crear punto de montaje</span>
+mkdir <span class="cmd-path">/mnt/disco</span>
+
+<span class="cmd-comment"># Montar manualmente</span>
+mount <span class="cmd-path">/dev/sdc1</span> <span class="cmd-path">/mnt/disco</span>
+
+<span class="cmd-comment"># Desmontar</span>
+umount <span class="cmd-path">/mnt/disco</span>
+
+<span class="cmd-comment"># Montaje automático: añadir en /etc/fstab</span>
+<span class="cmd-path">/dev/sdc1</span>  <span class="cmd-path">/mnt/disco</span>  ext4  defaults  0  2
+<span class="cmd-comment"># campos: dispositivo · punto_montaje · tipo · opciones · dump · pass</span>
+<span class="cmd-comment"># dump=0 → sin copia de seguridad con dump</span>
+<span class="cmd-comment"># pass=1 (raíz), pass=2 (resto), pass=0 (sin comprobación)</span></div>
+      </div>
+    </div>
+
+    <div class="resumen-section">
+      <div class="resumen-header" onclick="toggleSection(this)">
+        <div class="resumen-title"><div class="resumen-icon" style="background:rgba(0,229,255,0.1)">🛡️</div>RAID por Software en Linux — mdadm</div>
+        <div class="resumen-chevron">▼</div>
+      </div>
+      <div class="resumen-body">
+        <ul class="resumen-list">
+          <li class="cyan"><strong>mdadm</strong> = herramienta para gestionar RAID por software en Linux.</li>
+          <li class="green"><strong>Importante:</strong> los discos para RAID deben estar sin particionar (sin tabla de particiones). Usar discos completos: /dev/sdb, /dev/sdc... NO /dev/sdb1.</li>
+          <li class="purple"><strong>El RAID se crea sobre los discos completos</strong>, luego se formatea el volumen RAID (/dev/md0).</li>
+        </ul>
+        <div class="cmd-block" style="margin-top:12px">
+<span class="cmd-comment">## PASO 1 — Limpiar tabla de particiones de los discos</span>
+wipefs -a <span class="cmd-path">/dev/sdX</span>
+
+<span class="cmd-comment">## PASO 2 — Crear el RAID (ejemplos por nivel)</span>
+<span class="cmd-comment"># RAID 0 (2 discos)</span>
+mdadm --create --verbose <span class="cmd-path">/dev/md0</span> <span class="cmd-flag">--level=0</span> --raid-devices=2 <span class="cmd-path">/dev/sdc /dev/sdd</span>
+
+<span class="cmd-comment"># RAID 1 (2 discos)</span>
+mdadm --create --verbose <span class="cmd-path">/dev/md0</span> <span class="cmd-flag">--level=1</span> --raid-devices=2 <span class="cmd-path">/dev/sdc /dev/sdd</span>
+
+<span class="cmd-comment"># RAID 5 (mín. 3 discos)</span>
+mdadm --create --verbose <span class="cmd-path">/dev/md0</span> <span class="cmd-flag">--level=5</span> --raid-devices=3 <span class="cmd-path">/dev/sdb /dev/sdc /dev/sdd</span>
+
+<span class="cmd-comment"># RAID 10 (mín. 4 discos)</span>
+mdadm --create --verbose <span class="cmd-path">/dev/md0</span> <span class="cmd-flag">--level=10</span> --raid-devices=4 <span class="cmd-path">/dev/sdb /dev/sdc /dev/sdd /dev/sde</span>
+
+<span class="cmd-comment">## PASO 3 — Formatear el volumen RAID</span>
+mkfs.ext4 <span class="cmd-path">/dev/md0</span>
+
+<span class="cmd-comment">## PASO 4 — Montar (opcional)</span>
+mount <span class="cmd-path">/dev/md0</span> <span class="cmd-path">/mnt/raid</span>
+
+<span class="cmd-comment">## Ver estado del RAID</span>
+cat /proc/mdstat                         <span class="cmd-comment"># vista general</span>
+mdadm --detail <span class="cmd-path">/dev/md0</span>                <span class="cmd-comment"># info completa</span>
+
+<span class="cmd-comment">## Simular fallo y recuperar (RAID 1)</span>
+mdadm <span class="cmd-path">/dev/md0</span> --fail <span class="cmd-path">/dev/sdb</span>        <span class="cmd-comment"># marca como roto</span>
+mdadm <span class="cmd-path">/dev/md0</span> --remove <span class="cmd-path">/dev/sdb</span>      <span class="cmd-comment"># lo quita</span>
+mdadm <span class="cmd-path">/dev/md0</span> --add <span class="cmd-path">/dev/sdb</span>         <span class="cmd-comment"># añade disco nuevo</span>
+
+<span class="cmd-comment">## Eliminar RAID completamente</span>
+umount <span class="cmd-path">/dev/md0</span>
+mdadm --stop <span class="cmd-path">/dev/md0</span>
+mdadm --remove <span class="cmd-path">/dev/md0</span>
+mdadm --zero-superblock <span class="cmd-path">/dev/sdc</span>
+mdadm --zero-superblock <span class="cmd-path">/dev/sdd</span>
+wipefs -a <span class="cmd-path">/dev/sdc</span>
+wipefs -a <span class="cmd-path">/dev/sdd</span></div>
+
+        <table class="resumen-table" style="margin-top:16px">
+          <tr><th>Parámetro mdadm</th><th>Significado</th></tr>
+          <tr><td>--create</td><td>Crea nuevo dispositivo RAID</td></tr>
+          <tr><td>--verbose</td><td>Muestra detalles del proceso</td></tr>
+          <tr><td>/dev/md0</td><td>Nombre del dispositivo RAID resultante</td></tr>
+          <tr><td>--level=N</td><td>Nivel RAID: 0, 1, 5, 10...</td></tr>
+          <tr><td>--raid-devices=N</td><td>Número de discos que forman el RAID</td></tr>
+        </table>
+
+        <div style="font-family:var(--mono);font-size:11px;color:var(--accent);margin:14px 0 6px">RAID 5 — Nota sobre capacidad con discos distintos:</div>
+        <ul class="resumen-list">
+          <li class="orange"><strong>Discos distintos en RAID 5:</strong> el sistema iguala todos al tamaño del disco más pequeño. El espacio sobrante en los más grandes no se aprovecha. ⚠️ Usar siempre discos del mismo tamaño y características.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="resumen-section">
+      <div class="resumen-header" onclick="toggleSection(this)">
+        <div class="resumen-title"><div class="resumen-icon" style="background:rgba(250,204,21,0.1)">🗄️</div>LVM — Logical Volume Manager</div>
+        <div class="resumen-chevron">▼</div>
+      </div>
+      <div class="resumen-body">
+        <ul class="resumen-list">
+          <li class="cyan"><strong>LVM</strong> = sistema de gestión de volúmenes que combina varios discos/particiones en un único espacio lógico redimensionable. Ideal cuando se necesita flexibilidad.</li>
+        </ul>
+        <div class="lvm-diagram">
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <div class="lvm-box lvm-pv">PV<br>/dev/sdb1</div>
+            <div class="lvm-box lvm-pv">PV<br>/dev/sdc1</div>
+          </div>
+          <div class="lvm-arrow">→</div>
+          <div class="lvm-box lvm-vg">VG<br>grupo1</div>
+          <div class="lvm-arrow">→</div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <div class="lvm-box lvm-lv">LV<br>volumen1</div>
+            <div class="lvm-box lvm-lv">LV<br>volumen2</div>
+          </div>
+        </div>
+        <table class="resumen-table" style="margin-top:12px">
+          <tr><th>Componente</th><th>Qué es</th><th>Comando creación</th></tr>
+          <tr><td>PV (Physical Volume)</td><td>Disco o partición convertida en volumen físico para LVM</td><td>pvcreate</td></tr>
+          <tr><td>VG (Volume Group)</td><td>Conjunto de uno o más PV que forman un grupo lógico</td><td>vgcreate</td></tr>
+          <tr><td>LV (Logical Volume)</td><td>Volumen lógico creado dentro de un VG, donde se crea el sistema de archivos</td><td>lvcreate</td></tr>
+        </table>
+        <div class="cmd-block" style="margin-top:14px">
+<span class="cmd-comment">## LVM — Crear volúmenes paso a paso</span>
+
+<span class="cmd-comment"># 1. Convertir particiones en volúmenes físicos (PV)</span>
+pvcreate <span class="cmd-path">/dev/sdb1</span> <span class="cmd-path">/dev/sdc1</span>
+
+<span class="cmd-comment"># 2. Crear grupo de volúmenes (VG)</span>
+vgcreate grupo1 <span class="cmd-path">/dev/sdb1</span> <span class="cmd-path">/dev/sdc1</span>
+
+<span class="cmd-comment"># 3. Crear volumen lógico (LV) de 5GB</span>
+lvcreate -L 5G -n volumen1 grupo1
+
+<span class="cmd-comment"># 4. Formatear el volumen lógico</span>
+mkfs.ext4 <span class="cmd-path">/dev/grupo1/volumen1</span>
+
+<span class="cmd-comment"># 5. Montar el volumen</span>
+mount <span class="cmd-path">/dev/grupo1/volumen1</span> <span class="cmd-path">/mnt/lvm</span></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════ CHAT IA ══════════ -->
+<div id="view-chat" class="view">
+  <div class="mascot-wrap">
+    <div class="mascot">🦉</div>
+    <div>
+      <div class="mascot-name">BYTE · CHAT MODE</div>
+      <div class="mascot-bubble">¡Pregúntame cualquier cosa sobre la Unidad 4! Particiones, RAID con mdadm, LVM... ¡todo! 🐧</div>
+    </div>
+  </div>
+  <div class="section-title">Chat con IA</div>
+  <div class="section-sub">// TUTOR ESPECIALIZADO EN UNIDAD 4 — LINUX, DISCOS, RAID SOFTWARE, LVM</div>
+  <div class="api-setup">
+    <label class="api-label">API KEY DE ANTHROPIC</label>
+    <div class="api-input-row">
+      <input type="password" class="api-input" id="api-key-input" placeholder="sk-ant-api03-..." />
+      <button class="btn btn-primary" onclick="saveKey()">Guardar</button>
+    </div>
+    <div style="font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:8px;">La key se guarda en sessionStorage (solo en esta pestaña).</div>
+  </div>
+  <div class="chat-suggestions">
+    <button class="suggestion" onclick="sendSuggestion(this)">¿Diferencia entre lsblk, fdisk -l y parted -l?</button>
+    <button class="suggestion" onclick="sendSuggestion(this)">¿Cómo crear un RAID 5 con mdadm?</button>
+    <button class="suggestion" onclick="sendSuggestion(this)">¿Qué es PV, VG y LV en LVM?</button>
+    <button class="suggestion" onclick="sendSuggestion(this)">¿Qué pone en /etc/fstab y qué significa cada campo?</button>
+    <button class="suggestion" onclick="sendSuggestion(this)">¿Por qué wipefs antes de crear RAID?</button>
+    <button class="suggestion" onclick="sendSuggestion(this)">¿Diferencia entre partición extendida y lógica?</button>
+  </div>
+  <div class="chat-window" id="chat-window">
+    <div class="chat-empty" id="chat-empty">
+      <div style="font-size:32px">🦉</div>
+      <div style="font-size:13px;text-align:center;line-height:1.6">Introduce tu API key y pregúntame cualquier cosa<br>sobre la Unidad 4 — Linux, Discos, RAID y LVM.</div>
+    </div>
+  </div>
+  <div class="chat-input-row">
+    <textarea class="chat-input" id="chat-input" placeholder="Pregunta algo sobre Linux, particiones, RAID o LVM... (Enter para enviar)" onkeydown="chatKeyDown(event)"></textarea>
+    <button class="btn btn-primary" onclick="sendChat()">Enviar →</button>
+  </div>
+</div>
+
+</main>
+
+<script>
+// ═══════════════════════════════════════════
+// GAMIFICATION ENGINE
+// ═══════════════════════════════════════════
+let xp = 0, level = 1, streak = 0, combo = 0;
+const XP_PER_LEVEL = 100;
+let fcXpGained = 0, testXpGained = 0;
+
+function gainXP(amount, label) {
+  xp += amount;
+  const popup = document.getElementById('xp-popup');
+  popup.textContent = `+${amount} XP ${label||'⚡'}`;
+  popup.classList.add('show');
+  setTimeout(() => popup.classList.remove('show'), 1500);
+  updateXPBar();
+  checkLevelUp();
+}
+
+function updateXPBar() {
+  const cur = xp - (level-1)*XP_PER_LEVEL;
+  const pct = Math.min((cur/XP_PER_LEVEL)*100, 100);
+  document.getElementById('xp-fill').style.width = pct+'%';
+  document.getElementById('xp-count').textContent = `${xp} / ${level*XP_PER_LEVEL}`;
+}
+
+function checkLevelUp() {
+  const nl = Math.floor(xp/XP_PER_LEVEL)+1;
+  if (nl > level) { level = nl; showLevelUp(); }
+}
+
+function showLevelUp() {
+  spawnConfetti(60);
+  playSound('levelup');
+  document.getElementById('modal-emoji').textContent = ['🎉','🚀','⭐','🔥','💎'][Math.min(level-2,4)]||'🏆';
+  document.getElementById('modal-title').textContent = `¡NIVEL ${level}!`;
+  document.getElementById('modal-sub').textContent = `Nivel ${level} desbloqueado. ¡Dominas Linux como un sysadmin pro! 🦉`;
+  document.getElementById('modal-overlay').classList.add('show');
+}
+
+function closeModal() { document.getElementById('modal-overlay').classList.remove('show'); }
+
+function updateStreak(correct) {
+  if(correct) { streak++; combo++; document.getElementById('streak-count').textContent=streak; updateCombo(); }
+  else { combo=0; updateCombo(); }
+}
+
+function updateCombo() {
+  const w = document.getElementById('combo-wrap');
+  if(combo>=2) { w.style.display='flex'; const m=Math.min(combo,5); document.getElementById('combo-count').textContent=`x${m}`; document.getElementById('combo-multi').textContent=m; }
+  else { w.style.display='none'; }
+}
+
+function getComboMultiplier() { return Math.min(combo,5); }
+
+const AudioCtx = window.AudioContext||window.webkitAudioContext;
+let audioCtx;
+function initAudio() { if(!audioCtx) audioCtx=new AudioCtx(); }
+function playSound(type) {
+  try {
+    initAudio();
+    const o=audioCtx.createOscillator(), g=audioCtx.createGain();
+    o.connect(g); g.connect(audioCtx.destination);
+    if(type==='correct'){ o.frequency.setValueAtTime(523,audioCtx.currentTime); o.frequency.setValueAtTime(659,audioCtx.currentTime+0.1); o.frequency.setValueAtTime(784,audioCtx.currentTime+0.2); g.gain.setValueAtTime(0.15,audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+0.5); o.start(); o.stop(audioCtx.currentTime+0.5); }
+    else if(type==='wrong'){ o.type='sawtooth'; o.frequency.setValueAtTime(200,audioCtx.currentTime); o.frequency.setValueAtTime(150,audioCtx.currentTime+0.15); g.gain.setValueAtTime(0.12,audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+0.4); o.start(); o.stop(audioCtx.currentTime+0.4); }
+    else if(type==='flip'){ o.type='sine'; o.frequency.setValueAtTime(880,audioCtx.currentTime); g.gain.setValueAtTime(0.05,audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+0.15); o.start(); o.stop(audioCtx.currentTime+0.15); }
+    else if(type==='levelup'){ [523,659,784,1047].forEach((f,i)=>{ const o2=audioCtx.createOscillator(),g2=audioCtx.createGain(); o2.connect(g2); g2.connect(audioCtx.destination); o2.frequency.setValueAtTime(f,audioCtx.currentTime+i*0.12); g2.gain.setValueAtTime(0.15,audioCtx.currentTime+i*0.12); g2.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+i*0.12+0.3); o2.start(audioCtx.currentTime+i*0.12); o2.stop(audioCtx.currentTime+i*0.12+0.3); }); return; }
+  } catch(e){}
+}
+
+function spawnConfetti(count=30) {
+  const colors=['#00e5ff','#a78bfa','#34d399','#facc15','#f87171','#fb923c'];
+  for(let i=0;i<count;i++) setTimeout(()=>{ const el=document.createElement('div'); el.className='confetti-piece'; el.style.cssText=`left:${Math.random()*100}vw;top:-10px;background:${colors[Math.floor(Math.random()*colors.length)]};width:${6+Math.random()*8}px;height:${6+Math.random()*8}px;border-radius:${Math.random()>.5?'50%':'2px'};animation-duration:${1+Math.random()*1.5}s;animation-delay:${Math.random()*0.3}s;`; document.body.appendChild(el); setTimeout(()=>el.remove(),2500); },Math.random()*300);
+}
+
+const MASCOT_TIPS = [
+  "¡lsblk es tu mejor amigo para ver discos en el examen! 🔍",
+  "Recuerda: parted mklabel msdos = MBR · mklabel gpt = GPT 💡",
+  "mdadm --create + wipefs: los pasos del RAID empiezan así siempre 🛡️",
+  "LVM = PV → VG → LV. Es el orden correcto, no lo olvides 🗄️",
+  "/etc/fstab: dispositivo · punto · tipo · opciones · dump · pass 📁",
+  "Para RAID 5: mín. 3 discos. Capacidad = (n-1) discos útiles 🧮",
+  "¡No confundas /dev/md0 (RAID) con /dev/sda (disco físico)! ⚠️",
+  "wipefs -a limpia la tabla de particiones. Imprescindible antes de RAID 🧹",
+];
+let mascotTipIdx = 0;
+
+function mascotTalk() {
+  document.getElementById('mascot-bubble').textContent = MASCOT_TIPS[mascotTipIdx%MASCOT_TIPS.length];
+  mascotTipIdx++;
+  const m=document.getElementById('mascot');
+  m.classList.remove('happy','sad'); void m.offsetWidth; m.classList.add('happy');
+  setTimeout(()=>m.classList.remove('happy'),600);
+}
+
+function mascotReact(correct) {
+  const ok=["¡Correcto! +XP 💪","¡Exacto! Eso lo tienes claro 🎯","¡Bien hecho! 🦉","¡Crack total! ⚡"];
+  const ko=["¡Casi! Repasa ese comando 📖","Tranquilo, sigue intentándolo 💙","Vuelve al resumen y dale otra vuelta 📚","Error, pero del error se aprende 🔄"];
+  const b=document.getElementById('mascot-bubble-test')||document.getElementById('mascot-bubble');
+  if(b) b.textContent=correct?ok[Math.floor(Math.random()*ok.length)]:ko[Math.floor(Math.random()*ko.length)];
+  const m=document.getElementById('mascot-test')||document.getElementById('mascot');
+  if(m){ m.classList.remove('happy','sad'); void m.offsetWidth; m.classList.add(correct?'happy':'sad'); setTimeout(()=>m.classList.remove('happy','sad'),600); }
+}
+
+// ═══════════════════════════════════════════
+// FLASHCARDS DATA
+// ═══════════════════════════════════════════
+const FLASHCARDS = [
+  {term:"lsblk",def:"Lista discos y particiones en árbol. Columnas: NAME, MAJ:MIN, RM, SIZE, RO, TYPE (disk/part/rom/raid), MOUNTPOINTS. Con -f muestra filesystem y UUID."},
+  {term:"df -h",def:"Muestra espacio usado y libre en los sistemas de archivos montados. Columnas: S.ficheros, Tamaño, Usados, Disp, Use%, Montado en."},
+  {term:"fdisk -l",def:"Lista detallada de particiones: esquema (MBR/GPT), sectores, tamaño, tipo de partición. Muestra todos los discos del sistema."},
+  {term:"parted -l",def:"Muestra información de todos los discos y particiones: modelo, tamaño, tabla de particiones, número, inicio, fin, tamaño, tipo, filesystem y flags."},
+  {term:"parted /dev/sdX print",def:"Igual que parted -l pero solo para el disco indicado. Útil para ver si tiene tabla de particiones (GPT/msdos) o si está vacío (unknown)."},
+  {term:"Partición primaria (MBR vs GPT)",def:"MBR permite máximo 4 particiones primarias. GPT permite hasta 128 particiones primarias sin necesidad de extendidas ni lógicas."},
+  {term:"Partición extendida",def:"Tipo especial de partición en MBR que actúa como contenedor para crear particiones lógicas, superando el límite de 4 primarias."},
+  {term:"Partición lógica",def:"Se crea dentro de la extendida, solo en discos MBR. El SO la trata como partición normal. Hasta 23 lógicas posibles (Linux limita a ~15 en total)."},
+  {term:"parted mklabel msdos / gpt",def:"Crea tabla de particiones en un disco. 'msdos' = MBR (legacy, máx 2TB, máx 4 primarias). 'gpt' = GPT (moderno, hasta 9.4ZB, hasta 128 primarias)."},
+  {term:"parted mkpart primary ext4 1MiB 500MiB",def:"Crea una partición primaria tipo ext4 desde 1MiB hasta 500MiB. 'primary' puede ser 'extended' o 'logical'. El inicio y fin marcan los bytes exactos en el disco."},
+  {term:"parted resizepart N fin",def:"Redimensiona la partición número N cambiando solo su punto final. No se puede cambiar el inicio. La partición debe estar desmontada."},
+  {term:"mkfs.ext4 /dev/sdX2",def:"Formatea la partición /dev/sdX2 con sistema de archivos ext4. Crea inodos, superbloque, bloques de grupo y journal. Es necesario antes de poder montarla."},
+  {term:"/etc/fstab",def:"Archivo de configuración para montaje automático al iniciar. Campos: dispositivo · punto_montaje · tipo · opciones · dump · pass. dump=0 (sin backup), pass=1 (raíz), pass=2 (resto), pass=0 (no comprobar)."},
+  {term:"mount y umount",def:"mount /dev/sdX1 /mnt/disco → conecta la partición al árbol del sistema. umount /mnt/disco → desconecta (no borra datos). Necesario desmontar antes de redimensionar."},
+  {term:"wipefs -a /dev/sdX",def:"Elimina todas las firmas de sistemas de archivos y tablas de particiones de un disco. Imprescindible antes de crear un RAID con mdadm para evitar conflictos con configuraciones anteriores."},
+  {term:"mdadm",def:"Herramienta de Linux para crear y gestionar RAID por software. Para RAID se usan discos completos sin particionar (ej: /dev/sdc, no /dev/sdc1). El dispositivo RAID resultante es /dev/md0."},
+  {term:"mdadm --create --verbose /dev/md0 --level=N --raid-devices=N disco1 disco2...",def:"Crea un RAID. Parámetros: --level (0,1,5,10), --raid-devices (nº discos), discos a usar. El RAID queda en /dev/md0. Luego hay que formatear con mkfs.ext4 /dev/md0."},
+  {term:"RAID 0 en Linux (mdadm)",def:"--level=0. Mínimo 2 discos. Sin tolerancia a fallos, máximo rendimiento. Capacidad total = suma de todos los discos. Si falla uno, se pierden todos los datos."},
+  {term:"RAID 1 en Linux (mdadm)",def:"--level=1. Mínimo 2 discos. Espejo exacto. Tolera el fallo de 1 disco. Capacidad = 50% (el equivalente de 1 disco). Para recuperar: --fail, --remove, --add."},
+  {term:"RAID 5 en Linux (mdadm)",def:"--level=5. Mínimo 3 discos. Paridad distribuida entre todos. Tolera fallo de 1 disco. Capacidad = (n-1) discos. Todos deben ser del mismo tamaño (el sistema iguala al más pequeño)."},
+  {term:"RAID 10 en Linux (mdadm)",def:"--level=10. Mínimo 4 discos. Combina RAID 1 (espejos) + RAID 0 (striping). Pares de espejos: sdb+sdc (espejo1), sdd+sde (espejo2), ambos en RAID 0. Capacidad = 50%."},
+  {term:"cat /proc/mdstat",def:"Muestra el estado actual de todos los RAIDs por software del sistema: nivel, discos activos, bloques sincronizados. Ej: md0: active raid1 sdd[1] sdc[0]  10476544 blocks [2/2] [UU]"},
+  {term:"mdadm --detail /dev/md0",def:"Información completa y técnica del RAID: estado, nivel, tamaño, discos activos, fallidos, spare, fecha de creación y UUID. Más detallado que /proc/mdstat."},
+  {term:"LVM — PV, VG, LV",def:"PV (Physical Volume): disco/partición convertido en volumen físico con pvcreate. VG (Volume Group): pool de PVs con vgcreate. LV (Logical Volume): volumen lógico dentro del VG con lvcreate, donde se crea el filesystem."},
+  {term:"pvcreate / vgcreate / lvcreate",def:"pvcreate /dev/sdb1 /dev/sdc1 → crea PVs. vgcreate grupo1 /dev/sdb1 /dev/sdc1 → crea VG. lvcreate -L 5G -n volumen1 grupo1 → crea LV de 5GB llamado volumen1 en grupo1."},
+  {term:"/dev/grupo1/volumen1",def:"Ruta del volumen lógico LVM en el sistema de archivos. Se formatea con mkfs.ext4 y se monta con mount igual que cualquier partición. Ventaja: se puede redimensionar sin perder datos."},
+];
+
+let fcIndex=0, fcScores={bien:0,mal:0};
+let fcOrder=[...Array(FLASHCARDS.length).keys()];
+
+function renderCard() {
+  const c=FLASHCARDS[fcOrder[fcIndex]];
+  document.getElementById('fc-term').textContent=c.term;
+  document.getElementById('fc-def').textContent=c.def;
+  document.getElementById('fc-current').textContent=fcIndex+1;
+  document.getElementById('fc-progress').style.width=((fcIndex+1)/FLASHCARDS.length*100)+'%';
+  document.getElementById('card-scene').classList.remove('flipped');
+}
+
+function flipCard() { playSound('flip'); document.getElementById('card-scene').classList.toggle('flipped'); }
+function nextCard() { if(fcIndex<FLASHCARDS.length-1){fcIndex++;renderCard();} }
+function prevCard() { if(fcIndex>0){fcIndex--;renderCard();} }
+
+function markCard(r) {
+  fcScores[r]++;
+  document.getElementById('fc-'+r).textContent=(r==='bien'?'✓ ':'✗ ')+fcScores[r];
+  if(r==='bien'){
+    gainXP(10,'⚡'); fcXpGained+=10;
+    document.getElementById('fc-xp-tag').textContent=`⚡ ${fcXpGained} XP ganados`;
+    playSound('correct');
+    const m=document.getElementById('mascot'); m.classList.remove('happy','sad'); void m.offsetWidth; m.classList.add('happy'); setTimeout(()=>m.classList.remove('happy'),600);
+  } else {
+    playSound('wrong');
+    const m=document.getElementById('mascot'); m.classList.remove('happy','sad'); void m.offsetWidth; m.classList.add('sad'); setTimeout(()=>m.classList.remove('sad'),600);
+  }
+  nextCard();
+}
+
+function shuffleCards() { for(let i=fcOrder.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[fcOrder[i],fcOrder[j]]=[fcOrder[j],fcOrder[i]];} fcIndex=0; renderCard(); }
+function resetCards() { fcIndex=0; fcScores={bien:0,mal:0}; fcOrder=[...Array(FLASHCARDS.length).keys()]; document.getElementById('fc-bien').textContent='✓ 0'; document.getElementById('fc-mal').textContent='✗ 0'; fcXpGained=0; document.getElementById('fc-xp-tag').textContent='⚡ 0 XP ganados'; renderCard(); }
+renderCard();
+
+// ═══════════════════════════════════════════
+// TEST DATA
+// ═══════════════════════════════════════════
+const QUESTIONS = [
+  {
+    q:"¿Cuál es la diferencia principal entre una tabla de particiones MBR y GPT?",
+    opts:["MBR permite más particiones primarias que GPT","GPT permite hasta 128 particiones primarias; MBR solo 4","MBR es más moderno y soporta discos más grandes","GPT solo funciona con Linux, MBR con Windows"],
+    correct:1,
+    exp:"<strong>MBR (msdos)</strong> permite máximo 4 particiones primarias y soporta discos hasta 2TB. <strong>GPT</strong> es el estándar moderno: hasta 128 particiones primarias sin límite de tamaño de disco."
+  },
+  {
+    q:"¿Qué comando de Linux muestra los discos y particiones en formato árbol con su punto de montaje actual?",
+    opts:["df -h","fdisk -l","lsblk","parted -l"],
+    correct:2,
+    exp:"<strong>lsblk</strong> es el comando para visualizar discos y particiones en árbol. Muestra: NAME, MAJ:MIN, RM, SIZE, RO, TYPE (disk/part/raid0/raid1...) y MOUNTPOINTS. Con <strong>-f</strong> añade filesystem y UUID."
+  },
+  {
+    q:"Antes de crear un RAID por software con mdadm, ¿qué comando se debe ejecutar sobre los discos que se van a usar?",
+    opts:["fdisk -l /dev/sdX","mkfs.ext4 /dev/sdX","wipefs -a /dev/sdX","parted /dev/sdX print"],
+    correct:2,
+    exp:"<strong>wipefs -a /dev/sdX</strong> elimina todas las firmas de particiones y sistemas de archivos del disco. Es imprescindible antes de crear un RAID para que mdadm no encuentre datos conflictivos. Los discos para RAID deben estar completamente limpios."
+  },
+  {
+    q:"¿Cuál es el comando correcto para crear un RAID 5 por software con 3 discos en Linux?",
+    opts:["mdadm --create /dev/md0 --level=5 --raid-devices=3 /dev/sdb /dev/sdc /dev/sdd","mdadm --new /dev/md0 --type=5 --disks=3 /dev/sdb /dev/sdc /dev/sdd","mdadm --make /dev/md0 --raid=5 /dev/sdb /dev/sdc /dev/sdd","raid5 create /dev/md0 /dev/sdb /dev/sdc /dev/sdd"],
+    correct:0,
+    exp:"El comando es <strong>mdadm --create --verbose /dev/md0 --level=5 --raid-devices=3 /dev/sdb /dev/sdc /dev/sdd</strong>. Parámetros clave: --create (crear), --level (nivel RAID), --raid-devices (nº discos). Después hay que formatear: mkfs.ext4 /dev/md0."
+  },
+  {
+    q:"En el archivo /etc/fstab, ¿qué significan los dos últimos campos numéricos en la línea '/dev/sdc1 /mnt/disco ext4 defaults 0 2'?",
+    opts:["Prioridad de montaje y número de partición","Versión del sistema de archivos y tamaño máximo","Dump (copia de seguridad con dump) y pass (orden de comprobación al arrancar)","Número de inodos y tamaño de bloque"],
+    correct:2,
+    exp:"<strong>dump</strong> (0=sin backup con dump, 1=con backup) y <strong>pass</strong> (0=no comprobar, 1=raíz se comprueba primero, 2=el resto se comprueba después). Hoy en día dump siempre es 0 y pass es 1 para / y 2 para el resto."
+  },
+  {
+    q:"¿Qué comando muestra el estado actual de los RAIDs por software activos en el sistema de forma rápida?",
+    opts:["mdadm --status","cat /proc/mdstat","lsblk --raid","df -h /dev/md0"],
+    correct:1,
+    exp:"<strong>cat /proc/mdstat</strong> muestra el estado de todos los RAIDs activos: nivel, discos, bloques sincronizados y estado [UU] (U=activo, _=fallido). Para más detalle técnico, usar <strong>mdadm --detail /dev/md0</strong>."
+  },
+  {
+    q:"En LVM, ¿cuál es el orden correcto de los pasos para crear un volumen lógico?",
+    opts:["lvcreate → vgcreate → pvcreate","vgcreate → pvcreate → lvcreate","pvcreate → vgcreate → lvcreate","pvcreate → lvcreate → vgcreate"],
+    correct:2,
+    exp:"El orden LVM es siempre: <strong>pvcreate</strong> (Physical Volume: preparar discos/particiones) → <strong>vgcreate</strong> (Volume Group: crear pool de PVs) → <strong>lvcreate</strong> (Logical Volume: crear volumen lógico dentro del VG). Después se formatea con mkfs.ext4 y se monta."
+  },
+  {
+    q:"Tienes un RAID 5 con 4 discos de 2TB cada uno. ¿Cuánta capacidad útil tendrás?",
+    opts:["8 TB","4 TB","6 TB","2 TB"],
+    correct:2,
+    exp:"En <strong>RAID 5</strong> la capacidad útil es (n-1) × tamaño_disco. Con 4 discos de 2TB: (4-1) × 2TB = <strong>6TB útiles</strong>. El equivalente de 1 disco se usa para paridad distribuida entre todos."
+  },
+  {
+    q:"¿Qué ocurre si intentas redimensionar una partición que está actualmente montada?",
+    opts:["Se redimensiona correctamente sin problema","Solo funciona con ext4","No se puede; hay que desmontarla primero con umount","Se crea una copia de seguridad automáticamente"],
+    correct:2,
+    exp:"<strong>No se puede redimensionar una partición montada</strong>. Es necesario desmontarla primero con <strong>umount /mnt/punto</strong>. Desmontar no borra los datos, simplemente desconecta la partición del árbol del sistema de archivos temporalmente."
+  },
+  {
+    q:"¿Cuál es la ventaja principal de LVM frente a las particiones tradicionales?",
+    opts:["Mayor velocidad de lectura/escritura","Permite cifrado automático de datos","Los volúmenes lógicos se pueden redimensionar fácilmente sin perder datos","Ofrece tolerancia a fallos sin necesidad de RAID"],
+    correct:2,
+    exp:"La ventaja clave de <strong>LVM</strong> es la <strong>flexibilidad</strong>: los volúmenes lógicos pueden redimensionarse (ampliar o reducir) sin perder datos, y se pueden combinar varios discos/particiones en un único espacio lógico. Ideal para entornos donde el almacenamiento crece con el tiempo."
+  },
+];
+
+let qIndex=0, qCorrect=0, qWrong=0, qAnswered=false;
+let qOrder=[...Array(QUESTIONS.length).keys()];
+let lives=3;
+
+function renderHearts() { for(let i=1;i<=3;i++) document.getElementById('h'+i).classList.toggle('lost',i>lives); }
+
+function renderQuestion() {
+  const q=QUESTIONS[qOrder[qIndex]];
+  document.getElementById('q-num').textContent=qIndex+1;
+  document.getElementById('q-correct').textContent=qCorrect;
+  document.getElementById('q-wrong').textContent=qWrong;
+  document.getElementById('q-label').textContent='PREGUNTA '+String(qIndex+1).padStart(2,'0');
+  document.getElementById('q-text').textContent=q.q;
+  const optsEl=document.getElementById('q-options'); optsEl.innerHTML='';
+  q.opts.forEach((opt,i)=>{ const div=document.createElement('div'); div.className='option'; div.innerHTML=`<span class="option-letter">${['A','B','C','D'][i]}</span><span>${opt}</span>`; div.onclick=()=>answerQuestion(i); optsEl.appendChild(div); });
+  const qc=document.getElementById('question-card'); qc.classList.remove('correct-border','wrong-border');
+  document.getElementById('q-explanation').classList.remove('show');
+  document.getElementById('btn-next-q').style.display='none';
+  qAnswered=false;
+}
+
+function answerQuestion(selected) {
+  if(qAnswered)return; qAnswered=true;
+  const q=QUESTIONS[qOrder[qIndex]];
+  const opts=document.querySelectorAll('.option');
+  const correct=selected===q.correct;
+  opts.forEach((o,i)=>{ o.classList.add('disabled'); if(i===q.correct) o.classList.add('correct'); else if(i===selected&&!correct) o.classList.add('wrong'); });
+  const qc=document.getElementById('question-card');
+  if(correct){ qCorrect++; qc.classList.add('correct-border'); const xg=10*getComboMultiplier(); gainXP(xg,combo>=2?`🔥 x${getComboMultiplier()}`:'⚡'); testXpGained+=xg; playSound('correct'); if(combo>=2) spawnConfetti(20); }
+  else { qWrong++; qc.classList.add('wrong-border'); lives=Math.max(0,lives-1); renderHearts(); playSound('wrong'); }
+  updateStreak(correct); mascotReact(correct);
+  document.getElementById('q-correct').textContent=qCorrect;
+  document.getElementById('q-wrong').textContent=qWrong;
+  const exp=document.getElementById('q-explanation'); exp.innerHTML='💡 '+q.exp; exp.classList.add('show');
+  if(qIndex<QUESTIONS.length-1) document.getElementById('btn-next-q').style.display='inline-block';
+  else setTimeout(showResults,1200);
+}
+
+function nextQuestion() { qIndex++; renderQuestion(); }
+
+function showResults() {
+  document.getElementById('test-body').style.display='none';
+  document.getElementById('result-box').classList.add('show');
+  const pct=Math.round(qCorrect/QUESTIONS.length*100);
+  document.getElementById('result-score').textContent=pct+'%';
+  document.getElementById('result-xp').textContent=`⚡ +${testXpGained} XP ganados en este test`;
+  let label,color,emoji;
+  if(pct>=80){label='🎉 ¡Dominas Linux y RAID! Listo para el examen';color='var(--success)';emoji='🦉🏆';spawnConfetti(80);}
+  else if(pct>=60){label='📖 Bien, repasa los comandos de mdadm y LVM';color='var(--warn)';emoji='💪';}
+  else{label='🔁 Repasa el resumen de comandos y dale otra vez';color='var(--danger)';emoji='📚';}
+  document.getElementById('result-score').style.color=color;
+  document.getElementById('result-mascot').textContent=emoji;
+  document.getElementById('result-label').textContent=qCorrect+' correctas de '+QUESTIONS.length+' — '+label;
+}
+
+function resetTest() {
+  qIndex=0;qCorrect=0;qWrong=0;qAnswered=false;lives=3;combo=0;testXpGained=0;
+  renderHearts();updateCombo();
+  for(let i=qOrder.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[qOrder[i],qOrder[j]]=[qOrder[j],qOrder[i]];}
+  document.getElementById('test-body').style.display='block';
+  document.getElementById('result-box').classList.remove('show');
+  document.getElementById('mascot-bubble-test').textContent='¡Hora de demostrar lo que sabes sobre Linux! Comandos, particiones, RAID y LVM. ¡Sin trampa! 🐧';
+  renderQuestion();
+}
+renderQuestion();
+
+// ═══════════════════════════════════════════
+// RESUMEN
+// ═══════════════════════════════════════════
+function toggleSection(hdr) { hdr.parentElement.classList.toggle('open'); }
+
+// ═══════════════════════════════════════════
+// CHAT IA
+// ═══════════════════════════════════════════
+const SYSTEM_PROMPT=`Eres Byte, un tutor experto y amigable en Implantación de Sistemas Operativos del ciclo ASIR. Ayudas al alumno a estudiar la Unidad 4: "Asegurar la Información del Sistema en Linux — Discos, RAID por Software y LVM".
+
+Contenido de la unidad:
+- Administración de discos: disco, partición, sistema de archivos (ext4)
+- Tipos de particiones: primaria (MBR máx.4 / GPT máx.128), extendida (solo MBR), lógica (dentro de extendida, solo MBR)
+- /dev: /dev/sda (1er disco), /dev/sda1 (1ª partición), /dev/sr0 (CD/DVD)
+- Comandos de comprobación: lsblk, lsblk -f, df -h, fdisk -l, parted -l, parted /dev/sdX print
+- Gestión de particiones con parted: mklabel (msdos/gpt), mkpart, rm, resizepart
+- Formatear: mkfs.ext4 /dev/sdX2
+- Montaje: mkdir, mount, umount, /etc/fstab (campos: dispositivo, punto, tipo, opciones, dump, pass)
+- RAID por software con mdadm:
+  - Discos sin particionar, wipefs -a primero
+  - mdadm --create --verbose /dev/md0 --level=N --raid-devices=N discos...
+  - Niveles: 0 (striping, sin tolerancia), 1 (mirror, min 2), 5 (paridad dist., min 3, cap (n-1)), 10 (mirror+stripe, min 4)
+  - Formatear y montar: mkfs.ext4 /dev/md0, mount /dev/md0 /mnt/raid
+  - Estado: cat /proc/mdstat, mdadm --detail /dev/md0
+  - Fallo y recuperación: --fail, --remove, --add
+  - Eliminar RAID: umount, --stop, --remove, --zero-superblock, wipefs
+  - RAID 5 y discos distintos: el sistema iguala al disco más pequeño
+- LVM: PV (pvcreate), VG (vgcreate), LV (lvcreate -L tamaño -n nombre VG)
+  - Ruta del LV: /dev/nombreVG/nombreLV
+  - Formatear y montar igual que cualquier partición
+
+Responde de forma clara, pedagógica y con emojis ocasionales. Usa ejemplos concretos con comandos reales. Si el alumno pregunta fuera de esta unidad, redirige amablemente. Sé conciso pero completo. Menciona cuando algo puede caer en el examen.`;
+
+let chatHistory=[];
+let apiKey=sessionStorage.getItem('studyos_key')||'';
+if(apiKey) document.getElementById('api-key-input').value=apiKey;
+
+function saveKey(){ const k=document.getElementById('api-key-input').value.trim(); if(!k)return; apiKey=k; sessionStorage.setItem('studyos_key',k); addMsg('system','✓ API key guardada. ¡Byte listo para ayudarte con la Unidad 4! 🦉'); }
+
+function addMsg(role,text){
+  const win=document.getElementById('chat-window');
+  const emp=document.getElementById('chat-empty'); if(emp)emp.remove();
+  const div=document.createElement('div');
+  if(role==='user'){ div.className='msg msg-user'; div.innerHTML=`<div class="msg-sender">TÚ</div>${text}`; }
+  else { div.className='msg msg-ai'; div.innerHTML=`<div class="msg-sender">${role==='system'?'SISTEMA':'BYTE 🦉'}</div>${fmt(text)}`; }
+  win.appendChild(div); win.scrollTop=win.scrollHeight;
+}
+
+function fmt(t){ return t.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/`(.*?)`/g,'<code>$1</code>').replace(/\n/g,'<br>'); }
+
+function addTyping(){ const win=document.getElementById('chat-window'); const d=document.createElement('div'); d.className='msg msg-ai'; d.id='typing-ind'; d.innerHTML=`<div class="msg-sender">BYTE 🦉</div><div class="typing"><span></span><span></span><span></span></div>`; win.appendChild(d); win.scrollTop=win.scrollHeight; }
+
+async function sendChat(){
+  const input=document.getElementById('chat-input'); const text=input.value.trim();
+  if(!text)return; if(!apiKey){addMsg('system','⚠️ Introduce tu API key primero.');return;}
+  input.value=''; addMsg('user',text); chatHistory.push({role:'user',content:text}); addTyping();
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:SYSTEM_PROMPT,messages:chatHistory})});
+    const data=await res.json();
+    const ind=document.getElementById('typing-ind'); if(ind)ind.remove();
+    if(data.error){addMsg('system','⚠️ Error: '+data.error.message);chatHistory.pop();return;}
+    const reply=data.content[0].text; chatHistory.push({role:'assistant',content:reply}); addMsg('ai',reply);
+  } catch(err){ const ind=document.getElementById('typing-ind'); if(ind)ind.remove(); addMsg('system','⚠️ Error de red: '+err.message); chatHistory.pop(); }
+}
+
+function sendSuggestion(btn){ document.getElementById('chat-input').value=btn.textContent; sendChat(); }
+function chatKeyDown(e){ if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendChat();} }
+
+// ═══════════════════════════════════════════
+// NAV
+// ═══════════════════════════════════════════
+function switchView(view,btn){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('view-'+view).classList.add('active');
+  if(btn)btn.classList.add('active');
+}
+</script>
+</body>
+</html>

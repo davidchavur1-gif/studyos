@@ -1,0 +1,1054 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StudyOS — ASIR Unidad 3 · RAID</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #080b12;
+    --surface: #0f1219;
+    --surface2: #161b26;
+    --surface3: #1e2535;
+    --border: #252d40;
+    --accent: #00e5ff;
+    --accent-dim: rgba(0,229,255,0.12);
+    --accent2: #a78bfa;
+    --accent3: #34d399;
+    --warn: #fb923c;
+    --danger: #f87171;
+    --success: #34d399;
+    --xp-color: #facc15;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --muted2: #94a3b8;
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'Syne', sans-serif;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: var(--sans); min-height: 100vh; overflow-x: hidden; }
+  body::after { content: ''; position: fixed; inset: 0; background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px); pointer-events: none; z-index: 9999; }
+  body::before { content: ''; position: fixed; inset: 0; background-image: linear-gradient(rgba(0,229,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0,229,255,0.03) 1px, transparent 1px); background-size: 40px 40px; pointer-events: none; }
+
+  /* ── HEADER ── */
+  header { padding: 14px 32px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; background: rgba(8,11,18,0.95); backdrop-filter: blur(12px); position: sticky; top: 0; z-index: 100; flex-wrap: wrap; gap: 10px; }
+  .logo { font-family: var(--mono); font-size: 18px; font-weight: 700; color: var(--accent); display: flex; align-items: center; gap: 10px; }
+  .logo-dot { width: 8px; height: 8px; background: var(--accent); border-radius: 50%; box-shadow: 0 0 10px var(--accent); animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.3} }
+  .unit-badge { font-family: var(--mono); font-size: 11px; color: var(--muted); background: var(--surface2); border: 1px solid var(--border); padding: 4px 10px; border-radius: 4px; letter-spacing: 1px; }
+
+  /* ── XP BAR ── */
+  .xp-bar-wrap { display: flex; align-items: center; gap: 10px; }
+  .xp-label { font-family: var(--mono); font-size: 11px; color: var(--xp-color); font-weight: 700; letter-spacing: 1px; white-space: nowrap; }
+  .xp-track { width: 140px; height: 10px; background: var(--surface3); border-radius: 10px; overflow: hidden; border: 1px solid var(--border); }
+  .xp-fill { height: 100%; background: linear-gradient(90deg, var(--xp-color), #f97316); border-radius: 10px; transition: width 0.5s cubic-bezier(0.4,0,0.2,1); box-shadow: 0 0 8px rgba(250,204,21,0.5); }
+  .xp-count { font-family: var(--mono); font-size: 11px; color: var(--xp-color); }
+  .streak-badge { display: flex; align-items: center; gap: 4px; background: rgba(251,146,60,0.15); border: 1px solid rgba(251,146,60,0.3); border-radius: 20px; padding: 4px 10px; font-family: var(--mono); font-size: 12px; font-weight: 700; color: var(--warn); }
+
+  /* ── NAV ── */
+  nav { display: flex; gap: 4px; padding: 16px 32px; border-bottom: 1px solid var(--border); background: var(--surface); flex-wrap: wrap; }
+  .nav-btn { font-family: var(--mono); font-size: 12px; font-weight: 600; padding: 8px 18px; border-radius: 6px; border: 1px solid transparent; cursor: pointer; background: transparent; color: var(--muted); letter-spacing: 0.5px; transition: all 0.2s; }
+  .nav-btn:hover { color: var(--text); background: var(--surface2); }
+  .nav-btn.active { color: var(--accent); background: var(--accent-dim); border-color: rgba(0,229,255,0.3); }
+
+  main { max-width: 900px; margin: 0 auto; padding: 40px 24px; }
+  .view { display: none; animation: fadeIn 0.3s ease; }
+  .view.active { display: block; }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)} }
+  .section-title { font-size: 28px; font-weight: 800; margin-bottom: 8px; letter-spacing: -0.5px; }
+  .section-sub { font-family: var(--mono); font-size: 12px; color: var(--muted); margin-bottom: 32px; letter-spacing: 0.5px; }
+
+  /* ── MASCOT ── */
+  .mascot-wrap { display: flex; align-items: flex-end; gap: 20px; margin-bottom: 28px; }
+  .mascot { font-size: 52px; animation: mascot-idle 3s ease-in-out infinite; cursor: pointer; filter: drop-shadow(0 0 12px rgba(0,229,255,0.3)); user-select: none; transition: transform 0.1s; flex-shrink: 0; }
+  .mascot:active { transform: scale(0.9); }
+  @keyframes mascot-idle { 0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-6px) rotate(2deg)} }
+  .mascot.happy { animation: mascot-happy 0.5s ease; }
+  @keyframes mascot-happy { 0%{transform:scale(1)}25%{transform:scale(1.3) rotate(-10deg)}50%{transform:scale(1.2) rotate(10deg)}75%{transform:scale(1.1) rotate(-5deg)}100%{transform:scale(1)} }
+  .mascot.sad { animation: mascot-sad 0.5s ease; }
+  @keyframes mascot-sad { 0%{transform:translateX(0)}25%{transform:translateX(-8px)}50%{transform:translateX(8px)}75%{transform:translateX(-4px)}100%{transform:translateX(0)} }
+  .mascot-bubble { background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; border-bottom-left-radius: 3px; padding: 12px 16px; font-size: 14px; color: var(--muted2); line-height: 1.5; max-width: 480px; position: relative; transition: all 0.3s; }
+  .mascot-bubble::before { content: ''; position: absolute; left: -8px; bottom: 10px; border: 6px solid transparent; border-right-color: var(--border); }
+  .mascot-bubble::after { content: ''; position: absolute; left: -6px; bottom: 11px; border: 5px solid transparent; border-right-color: var(--surface2); }
+  .mascot-name { font-family: var(--mono); font-size: 10px; color: var(--accent); letter-spacing: 1px; margin-bottom: 4px; font-weight: 700; }
+
+  /* ── HEARTS / LIVES ── */
+  .lives-wrap { display: flex; align-items: center; gap: 6px; margin-bottom: 20px; }
+  .heart { font-size: 20px; transition: all 0.3s; }
+  .heart.lost { filter: grayscale(1); opacity: 0.3; animation: heart-lost 0.4s ease; }
+  @keyframes heart-lost { 0%{transform:scale(1)}50%{transform:scale(0.5) rotate(20deg)}100%{transform:scale(1)} }
+  .lives-label { font-family: var(--mono); font-size: 11px; color: var(--muted); margin-left: 4px; }
+
+  /* ── FLASHCARDS ── */
+  .flashcard-controls { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+  .progress-text { font-family: var(--mono); font-size: 13px; color: var(--muted2); }
+  .progress-bar { width: 200px; height: 6px; background: var(--surface3); border-radius: 3px; overflow: hidden; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 3px; transition: width 0.4s ease; box-shadow: 0 0 8px var(--accent); }
+  .card-scene { perspective: 1200px; height: 300px; margin-bottom: 24px; cursor: pointer; }
+  .card-inner { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; transition: transform 0.5s cubic-bezier(0.4,0,0.2,1); }
+  .card-scene.flipped .card-inner { transform: rotateY(180deg); }
+  .card-face { position: absolute; inset: 0; backface-visibility: hidden; border-radius: 16px; border: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px; text-align: center; }
+  .card-front { background: var(--surface); background-image: radial-gradient(circle at 30% 20%, rgba(0,229,255,0.05) 0%, transparent 60%); }
+  .card-back { background: var(--surface2); background-image: radial-gradient(circle at 70% 80%, rgba(167,139,250,0.08) 0%, transparent 60%); transform: rotateY(180deg); }
+  .card-label { font-family: var(--mono); font-size: 10px; letter-spacing: 2px; color: var(--muted); margin-bottom: 16px; text-transform: uppercase; }
+  .card-front .card-label { color: var(--accent); }
+  .card-back .card-label { color: var(--accent2); }
+  .card-term { font-size: 22px; font-weight: 700; line-height: 1.4; }
+  .card-def { font-size: 15px; line-height: 1.6; color: var(--muted2); max-width: 600px; }
+  .card-hint { font-family: var(--mono); font-size: 11px; color: var(--muted); margin-top: 20px; opacity: 0.6; }
+  .card-nav { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .btn { font-family: var(--mono); font-size: 12px; font-weight: 700; padding: 10px 24px; border-radius: 10px; border: 1px solid var(--border); cursor: pointer; transition: all 0.2s; letter-spacing: 0.5px; }
+  .btn-primary { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+  .btn-primary:hover { box-shadow: 0 0 20px rgba(0,229,255,0.4); transform: translateY(-2px); }
+  .btn-secondary { background: var(--surface2); color: var(--text); }
+  .btn-secondary:hover { background: var(--surface3); border-color: var(--muted); transform: translateY(-1px); }
+  .btn-success { background: rgba(52,211,153,0.15); color: var(--success); border-color: rgba(52,211,153,0.4); }
+  .btn-success:hover { background: rgba(52,211,153,0.25); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(52,211,153,0.2); }
+  .btn-danger { background: rgba(248,113,113,0.15); color: var(--danger); border-color: rgba(248,113,113,0.4); }
+  .btn-danger:hover { background: rgba(248,113,113,0.25); transform: translateY(-2px); }
+  .tag { display: inline-block; font-family: var(--mono); font-size: 10px; padding: 2px 8px; border-radius: 4px; letter-spacing: 0.5px; font-weight: 600; }
+  .tag-cyan { background: rgba(0,229,255,0.12); color: var(--accent); }
+  .tag-purple { background: rgba(167,139,250,0.12); color: var(--accent2); }
+  .tag-green { background: rgba(52,211,153,0.12); color: var(--accent3); }
+  .tag-orange { background: rgba(251,146,60,0.12); color: var(--warn); }
+  .tag-xp { background: rgba(250,204,21,0.15); color: var(--xp-color); border: 1px solid rgba(250,204,21,0.3); }
+
+  /* ── XP POPUP ── */
+  .xp-popup { position: fixed; top: 80px; right: 24px; background: rgba(250,204,21,0.15); border: 2px solid var(--xp-color); border-radius: 12px; padding: 10px 20px; font-family: var(--mono); font-size: 16px; font-weight: 700; color: var(--xp-color); z-index: 9998; opacity: 0; transform: translateY(10px); transition: all 0.3s; pointer-events: none; }
+  .xp-popup.show { opacity: 1; transform: translateY(0); }
+
+  /* ── CONFETTI ── */
+  .confetti-piece { position: fixed; width: 10px; height: 10px; border-radius: 2px; pointer-events: none; z-index: 9997; animation: confetti-fall 1.5s ease-in forwards; }
+  @keyframes confetti-fall { 0%{transform:translateY(-20px) rotate(0deg);opacity:1} 100%{transform:translateY(100vh) rotate(720deg);opacity:0} }
+
+  /* ── TEST ── */
+  .test-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
+  .test-score { font-family: var(--mono); font-size: 13px; color: var(--muted2); }
+  .question-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 32px; margin-bottom: 20px; transition: border-color 0.3s; }
+  .question-card.correct-border { border-color: var(--success); box-shadow: 0 0 20px rgba(52,211,153,0.15); }
+  .question-card.wrong-border { border-color: var(--danger); box-shadow: 0 0 20px rgba(248,113,113,0.15); }
+  .question-num { font-family: var(--mono); font-size: 11px; letter-spacing: 1px; color: var(--accent); margin-bottom: 12px; }
+  .question-text { font-size: 17px; font-weight: 600; line-height: 1.5; margin-bottom: 24px; }
+  .options { display: flex; flex-direction: column; gap: 10px; }
+  .option { padding: 14px 18px; border-radius: 10px; border: 2px solid var(--border); background: var(--surface2); cursor: pointer; font-size: 14px; line-height: 1.5; transition: all 0.2s; display: flex; align-items: flex-start; gap: 12px; }
+  .option:hover:not(.disabled) { border-color: var(--accent); background: var(--accent-dim); color: var(--accent); transform: translateX(4px); }
+  .option.correct { border-color: var(--success); background: rgba(52,211,153,0.1); color: var(--success); animation: option-correct 0.4s ease; }
+  .option.wrong { border-color: var(--danger); background: rgba(248,113,113,0.1); color: var(--danger); animation: option-wrong 0.4s ease; }
+  .option.disabled { cursor: default; }
+  @keyframes option-correct { 0%{transform:scale(1)}50%{transform:scale(1.02)}100%{transform:scale(1)} }
+  @keyframes option-wrong { 0%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}100%{transform:translateX(0)} }
+  .option-letter { font-family: var(--mono); font-size: 12px; font-weight: 700; min-width: 20px; opacity: 0.6; }
+  .explanation { margin-top: 16px; padding: 14px 18px; border-radius: 10px; background: rgba(167,139,250,0.08); border: 1px solid rgba(167,139,250,0.2); font-size: 13px; line-height: 1.6; color: var(--muted2); display: none; }
+  .explanation.show { display: block; animation: fadeIn 0.3s ease; }
+  .explanation strong { color: var(--accent2); }
+  .test-actions { display: flex; gap: 12px; margin-top: 16px; flex-wrap: wrap; }
+  .result-box { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 40px; text-align: center; display: none; }
+  .result-box.show { display: block; animation: fadeIn 0.5s ease; }
+  .result-score { font-size: 64px; font-weight: 800; font-family: var(--mono); margin-bottom: 8px; }
+  .result-label { font-size: 16px; color: var(--muted2); margin-bottom: 24px; }
+  .result-mascot { font-size: 80px; animation: mascot-happy 0.8s ease infinite alternate; display: block; margin-bottom: 16px; }
+  .result-xp { font-family: var(--mono); font-size: 14px; color: var(--xp-color); margin-top: 12px; }
+
+  /* ── RESUMEN ── */
+  .resumen-grid { display: grid; gap: 16px; }
+  .resumen-section { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; transition: border-color 0.2s; }
+  .resumen-section:hover { border-color: rgba(0,229,255,0.2); }
+  .resumen-header { padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: background 0.2s; user-select: none; }
+  .resumen-header:hover { background: var(--surface2); }
+  .resumen-title { font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+  .resumen-icon { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+  .resumen-chevron { font-size: 12px; color: var(--muted); transition: transform 0.3s; }
+  .resumen-section.open .resumen-chevron { transform: rotate(180deg); }
+  .resumen-body { padding: 0 20px; max-height: 0; overflow: hidden; transition: max-height 0.4s ease, padding 0.3s; }
+  .resumen-section.open .resumen-body { max-height: 2000px; padding: 0 20px 20px; }
+  .resumen-table { width: 100%; border-collapse: collapse; font-size: 13px; font-family: var(--mono); }
+  .resumen-table th { text-align: left; padding: 8px 12px; color: var(--accent); font-size: 11px; letter-spacing: 1px; border-bottom: 1px solid var(--border); }
+  .resumen-table td { padding: 8px 12px; border-bottom: 1px solid rgba(37,45,64,0.5); vertical-align: top; line-height: 1.6; color: var(--muted2); }
+  .resumen-table tr:last-child td { border-bottom: none; }
+  .resumen-table td:first-child { color: var(--text); font-weight: 600; white-space: nowrap; width: 160px; }
+  .resumen-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+  .resumen-list li { padding: 10px 14px; background: var(--surface2); border-radius: 8px; font-size: 13px; color: var(--muted2); line-height: 1.5; border-left: 3px solid var(--border); }
+  .resumen-list li strong { color: var(--text); }
+  .resumen-list li.cyan { border-left-color: var(--accent); }
+  .resumen-list li.purple { border-left-color: var(--accent2); }
+  .resumen-list li.green { border-left-color: var(--accent3); }
+  .resumen-list li.orange { border-left-color: var(--warn); }
+
+  /* ── RAID LEVEL CARDS (visual) ── */
+  .raid-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; margin-top: 12px; }
+  .raid-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; padding: 16px; transition: all 0.2s; }
+  .raid-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .raid-card-title { font-family: var(--mono); font-size: 13px; font-weight: 700; color: var(--accent); margin-bottom: 6px; }
+  .raid-card-nick { font-size: 11px; color: var(--muted2); margin-bottom: 10px; font-family: var(--mono); }
+  .raid-disk-row { display: flex; gap: 4px; margin-bottom: 10px; flex-wrap: wrap; }
+  .raid-disk { width: 28px; height: 36px; border-radius: 5px; border: 1.5px solid; display: flex; align-items: center; justify-content: center; font-size: 9px; font-family: var(--mono); font-weight: 700; }
+  .disk-data { background: rgba(0,229,255,0.08); border-color: var(--accent); color: var(--accent); }
+  .disk-mirror { background: rgba(167,139,250,0.08); border-color: var(--accent2); color: var(--accent2); }
+  .disk-parity { background: rgba(251,146,60,0.08); border-color: var(--warn); color: var(--warn); }
+  .disk-lost { background: rgba(248,113,113,0.08); border-color: var(--danger); color: var(--danger); opacity: 0.5; }
+  .raid-stat { font-family: var(--mono); font-size: 10px; color: var(--muted); }
+  .raid-stat span { color: var(--text); }
+
+  /* ── CHAT ── */
+  .api-setup { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-bottom: 24px; }
+  .api-label { font-family: var(--mono); font-size: 11px; color: var(--muted); letter-spacing: 1px; margin-bottom: 8px; display: block; }
+  .api-input-row { display: flex; gap: 10px; }
+  .api-input { flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; color: var(--text); font-family: var(--mono); font-size: 13px; outline: none; transition: border-color 0.2s; }
+  .api-input:focus { border-color: var(--accent); }
+  .api-input::placeholder { color: var(--muted); }
+  .chat-window { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; height: 400px; overflow-y: auto; padding: 20px; margin-bottom: 16px; display: flex; flex-direction: column; gap: 16px; scroll-behavior: smooth; }
+  .chat-window::-webkit-scrollbar { width: 4px; }
+  .chat-window::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  .msg { max-width: 80%; padding: 12px 16px; border-radius: 10px; font-size: 14px; line-height: 1.6; }
+  .msg-user { align-self: flex-end; background: var(--accent-dim); border: 1px solid rgba(0,229,255,0.2); color: var(--text); border-bottom-right-radius: 3px; }
+  .msg-ai { align-self: flex-start; background: var(--surface2); border: 1px solid var(--border); color: var(--muted2); border-bottom-left-radius: 3px; }
+  .msg-ai strong { color: var(--text); }
+  .msg-ai code { background: var(--surface3); padding: 1px 6px; border-radius: 4px; font-family: var(--mono); font-size: 12px; color: var(--accent); }
+  .msg-sender { font-family: var(--mono); font-size: 10px; letter-spacing: 1px; margin-bottom: 6px; opacity: 0.6; }
+  .chat-empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; color: var(--muted); }
+  .chat-empty-icon { font-size: 32px; }
+  .chat-empty-text { font-size: 13px; text-align: center; line-height: 1.6; }
+  .chat-suggestions { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+  .suggestion { font-family: var(--mono); font-size: 11px; padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface2); color: var(--muted2); cursor: pointer; transition: all 0.2s; }
+  .suggestion:hover { border-color: var(--accent); color: var(--accent); }
+  .chat-input-row { display: flex; gap: 10px; }
+  .chat-input { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; color: var(--text); font-family: var(--sans); font-size: 14px; outline: none; transition: border-color 0.2s; resize: none; height: 48px; }
+  .chat-input:focus { border-color: var(--accent); }
+  .chat-input::placeholder { color: var(--muted); }
+  .typing { display: flex; gap: 4px; align-items: center; padding: 4px 0; }
+  .typing span { width: 6px; height: 6px; background: var(--muted); border-radius: 50%; animation: blink 1.2s infinite; }
+  .typing span:nth-child(2){animation-delay:0.2s}
+  .typing span:nth-child(3){animation-delay:0.4s}
+  @keyframes blink { 0%,100%{opacity:0.3;transform:translateY(0)}50%{opacity:1;transform:translateY(-3px)} }
+
+  /* ── LEVEL UP MODAL ── */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(6px); z-index: 10000; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+  .modal-overlay.show { opacity: 1; pointer-events: all; }
+  .modal-box { background: var(--surface); border: 2px solid var(--xp-color); border-radius: 20px; padding: 40px; text-align: center; max-width: 360px; width: 90%; box-shadow: 0 0 60px rgba(250,204,21,0.3); animation: modal-in 0.4s cubic-bezier(0.4,0,0.2,1); }
+  @keyframes modal-in { from{transform:scale(0.7) translateY(20px);opacity:0}to{transform:scale(1) translateY(0);opacity:1} }
+  .modal-emoji { font-size: 72px; display: block; margin-bottom: 16px; animation: mascot-happy 0.6s ease infinite alternate; }
+  .modal-title { font-size: 24px; font-weight: 800; color: var(--xp-color); margin-bottom: 8px; }
+  .modal-sub { font-size: 14px; color: var(--muted2); margin-bottom: 24px; line-height: 1.5; }
+
+  /* ── COMBO indicator ── */
+  .combo-wrap { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
+  .combo-count { font-family: var(--mono); font-size: 20px; font-weight: 800; color: var(--warn); }
+  .combo-label { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+  .combo-fire { font-size: 20px; animation: pulse 0.5s infinite; }
+</style>
+</head>
+<body>
+
+<!-- XP Popup -->
+<div class="xp-popup" id="xp-popup">+10 XP ⚡</div>
+
+<!-- Level Up Modal -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal-box">
+    <span class="modal-emoji" id="modal-emoji">🎉</span>
+    <div class="modal-title" id="modal-title">¡NIVEL SUBIDO!</div>
+    <div class="modal-sub" id="modal-sub">Sigue así, crack.</div>
+    <button class="btn btn-primary" onclick="closeModal()" style="margin-top:8px">¡Seguir aprendiendo! →</button>
+  </div>
+</div>
+
+<header>
+  <div style="display:flex;align-items:center;gap:16px;">
+    <div class="logo"><div class="logo-dot"></div>StudyOS</div>
+    <div class="unit-badge">ASIR · ISO · UNIDAD 3 · RAID</div>
+  </div>
+  <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+    <div class="streak-badge">🔥 <span id="streak-count">0</span></div>
+    <div class="xp-bar-wrap">
+      <div class="xp-label">XP</div>
+      <div class="xp-track"><div class="xp-fill" id="xp-fill" style="width:0%"></div></div>
+      <div class="xp-count" id="xp-count">0 / 100</div>
+    </div>
+  </div>
+</header>
+
+<nav>
+  <button class="nav-btn active" onclick="switchView('flashcards',this)">⚡ Flashcards</button>
+  <button class="nav-btn" onclick="switchView('test',this)">📝 Test</button>
+  <button class="nav-btn" onclick="switchView('resumen',this)">📚 Resumen</button>
+  <button class="nav-btn" onclick="switchView('chat',this)">🤖 Chat IA</button>
+</nav>
+
+<main>
+
+<!-- ══════════ FLASHCARDS ══════════ -->
+<div id="view-flashcards" class="view active">
+  <div class="mascot-wrap">
+    <div class="mascot" id="mascot" onclick="mascotTalk()">🦉</div>
+    <div>
+      <div class="mascot-name">BYTE · TU TUTOR</div>
+      <div class="mascot-bubble" id="mascot-bubble">¡Hola! Soy Byte 🦉 Vamos a dominar RAID juntos. ¡Toca las tarjetas para estudiar!</div>
+    </div>
+  </div>
+
+  <div class="section-title">Flashcards · RAID</div>
+  <div class="section-sub">// CLICK EN LA TARJETA PARA VER LA DEFINICIÓN · <span id="fc-total">22</span> TARJETAS</div>
+  <div class="flashcard-controls">
+    <div class="progress-text">Tarjeta <span id="fc-current">1</span> / <span id="fc-total2">22</span></div>
+    <div class="progress-bar"><div class="progress-fill" id="fc-progress"></div></div>
+  </div>
+  <div class="card-scene" id="card-scene" onclick="flipCard()">
+    <div class="card-inner">
+      <div class="card-face card-front">
+        <div class="card-label">TÉRMINO</div>
+        <div class="card-term" id="fc-term">—</div>
+        <div class="card-hint">↩ click para ver definición</div>
+      </div>
+      <div class="card-face card-back">
+        <div class="card-label">DEFINICIÓN</div>
+        <div class="card-def" id="fc-def">—</div>
+      </div>
+    </div>
+  </div>
+  <div class="card-nav">
+    <button class="btn btn-secondary" onclick="prevCard()">← Anterior</button>
+    <button class="btn btn-danger" onclick="markCard('mal')">✗ No lo sé</button>
+    <button class="btn btn-success" onclick="markCard('bien')">✓ Lo sé</button>
+    <button class="btn btn-secondary" onclick="nextCard()">Siguiente →</button>
+  </div>
+  <div style="margin-top:20px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
+    <span class="tag tag-green" id="fc-bien">✓ 0</span>
+    <span class="tag tag-orange" id="fc-mal">✗ 0</span>
+    <span class="tag tag-xp" id="fc-xp-tag">⚡ 0 XP ganados</span>
+    <button class="btn btn-secondary" style="font-size:11px;padding:6px 14px" onclick="shuffleCards()">🔀 Barajar</button>
+    <button class="btn btn-secondary" style="font-size:11px;padding:6px 14px" onclick="resetCards()">↺ Reiniciar</button>
+  </div>
+</div>
+
+<!-- ══════════ TEST ══════════ -->
+<div id="view-test" class="view">
+  <div class="mascot-wrap">
+    <div class="mascot" id="mascot-test">🦉</div>
+    <div>
+      <div class="mascot-name">BYTE · TEST MODE</div>
+      <div class="mascot-bubble" id="mascot-bubble-test">¡Hora de demostrar lo que sabes! Cada respuesta correcta te da XP. ¡Sin presión... bueno, un poco! 😅</div>
+    </div>
+  </div>
+
+  <div class="lives-wrap" id="lives-wrap">
+    <span class="heart" id="h1">❤️</span>
+    <span class="heart" id="h2">❤️</span>
+    <span class="heart" id="h3">❤️</span>
+    <span class="lives-label">vidas</span>
+  </div>
+
+  <div class="combo-wrap" id="combo-wrap" style="display:none">
+    <span class="combo-count" id="combo-count">x2</span>
+    <span class="combo-fire">🔥</span>
+    <span class="combo-label">COMBO · XP x<span id="combo-multi">2</span></span>
+  </div>
+
+  <div class="section-title">Test Tipo Examen</div>
+  <div class="section-sub">// 10 PREGUNTAS · UNA SOLA RESPUESTA CORRECTA</div>
+  <div id="test-body">
+    <div class="test-header">
+      <div class="test-score">Pregunta <span id="q-num">1</span>/10</div>
+      <div class="test-score">✓ <span id="q-correct">0</span> &nbsp;|&nbsp; ✗ <span id="q-wrong">0</span></div>
+    </div>
+    <div class="question-card" id="question-card">
+      <div class="question-num" id="q-label">PREGUNTA 01</div>
+      <div class="question-text" id="q-text">—</div>
+      <div class="options" id="q-options"></div>
+      <div class="explanation" id="q-explanation"></div>
+    </div>
+    <div class="test-actions">
+      <button class="btn btn-primary" id="btn-next-q" onclick="nextQuestion()" style="display:none">Siguiente →</button>
+      <button class="btn btn-secondary" onclick="resetTest()">↺ Reiniciar</button>
+    </div>
+  </div>
+  <div class="result-box" id="result-box">
+    <span class="result-mascot" id="result-mascot">🎉</span>
+    <div class="result-score" id="result-score">—</div>
+    <div class="result-label" id="result-label">—</div>
+    <div class="result-xp" id="result-xp">⚡ +0 XP ganados en este test</div>
+    <button class="btn btn-primary" onclick="resetTest()" style="margin-top:24px">Repetir test →</button>
+  </div>
+</div>
+
+<!-- ══════════ RESUMEN ══════════ -->
+<div id="view-resumen" class="view">
+  <div class="section-title">Resumen · RAID</div>
+  <div class="section-sub">// UNIDAD 3 · ASEGURAR LA INFORMACIÓN · TOLERANCIA A FALLOS</div>
+  <div class="resumen-grid">
+
+    <div class="resumen-section open">
+      <div class="resumen-header" onclick="toggleSection(this)">
+        <div class="resumen-title"><div class="resumen-icon" style="background:rgba(0,229,255,0.1)">💾</div>¿Qué es RAID?</div>
+        <div class="resumen-chevron">▼</div>
+      </div>
+      <div class="resumen-body">
+        <ul class="resumen-list">
+          <li class="cyan"><strong>RAID</strong> = Redundant Array of Independent Disks. Combina varios discos para formar una unidad lógica.</li>
+          <li class="green"><strong>Ventajas vs disco único:</strong> mayor integridad, tolerancia a fallos, mayor rendimiento, más capacidad.</li>
+          <li class="purple"><strong>RAID Hardware</strong> → controladores PCI dedicados. Independiente del SO. Más rápido, mejor integridad.</li>
+          <li class="orange"><strong>RAID Software</strong> → implementado por el SO. Más barato pero depende de la plataforma.</li>
+          <li class="cyan"><strong>Discos para RAID:</strong> IDE/SATA (baratos, no ideales), SCSI/SAS (servidores), SSD (mejor rendimiento I/O).</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="resumen-section">
+      <div class="resumen-header" onclick="toggleSection(this)">
+        <div class="resumen-title"><div class="resumen-icon" style="background:rgba(251,146,60,0.1)">⚡</div>Niveles RAID — Comparativa rápida</div>
+        <div class="resumen-chevron">▼</div>
+      </div>
+      <div class="resumen-body">
+        <table class="resumen-table">
+          <tr><th>Nivel</th><th>Alias</th><th>Mín. discos</th><th>Tolerancia</th><th>Uso ideal</th></tr>
+          <tr><td>RAID 0</td><td>Striping</td><td>2</td><td>❌ Ninguna</td><td>Rendimiento puro (edición vídeo)</td></tr>
+          <tr><td>RAID 1</td><td>Mirroring</td><td>2</td><td>✅ 1 disco</td><td>Archivos pequeños, BD críticas</td></tr>
+          <tr><td>RAID 2</td><td>Hamming</td><td>3+</td><td>✅ 1 disco</td><td>Obsoleto, no comercial</td></tr>
+          <tr><td>RAID 3</td><td>Paridad dedicada síncrona</td><td>3</td><td>✅ 1 disco</td><td>Archivos grandes, 1 solo usuario</td></tr>
+          <tr><td>RAID 4</td><td>Paridad dedicada independiente</td><td>3</td><td>✅ 1 disco</td><td>Apps gráficas, ficheros grandes</td></tr>
+          <tr><td>RAID 5</td><td>Paridad distribuida</td><td>3</td><td>✅ 1 disco</td><td>Servidores multiusuario ★ MÁS USADO</td></tr>
+          <tr><td>RAID 6</td><td>Doble paridad</td><td>3</td><td>✅ 2 discos</td><td>Alta disponibilidad crítica</td></tr>
+          <tr><td>RAID 0+1 / 10</td><td>Stripe+Mirror</td><td>4</td><td>✅ varios</td><td>Máx. rendimiento + tolerancia</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="resumen-section">
+      <div class="resumen-header" onclick="toggleSection(this)">
+        <div class="resumen-title"><div class="resumen-icon" style="background:rgba(52,211,153,0.1)">🔍</div>RAID 0, 1, 5 en detalle</div>
+        <div class="resumen-chevron">▼</div>
+      </div>
+      <div class="resumen-body">
+        <div class="raid-grid">
+          <div class="raid-card">
+            <div class="raid-card-title">RAID 0 — Striping</div>
+            <div class="raid-card-nick">"La más alta transferencia, pero sin tolerancia"</div>
+            <div class="raid-disk-row">
+              <div class="raid-disk disk-data">D1</div>
+              <div class="raid-disk disk-data">D2</div>
+              <div class="raid-disk disk-data">D3</div>
+            </div>
+            <div class="raid-stat">Tolerancia: <span style="color:var(--danger)">❌ ninguna</span></div>
+            <div class="raid-stat">Capacidad: <span>100% de todos los discos</span></div>
+            <div class="raid-stat">Velocidad: <span style="color:var(--success)">🚀 muy alta</span></div>
+          </div>
+          <div class="raid-card">
+            <div class="raid-card-title">RAID 1 — Mirroring</div>
+            <div class="raid-card-nick">"Más rápido que un disco y más seguro"</div>
+            <div class="raid-disk-row">
+              <div class="raid-disk disk-data">D1</div>
+              <div class="raid-disk disk-mirror">D1'</div>
+            </div>
+            <div class="raid-stat">Tolerancia: <span style="color:var(--success)">✅ 1 disco</span></div>
+            <div class="raid-stat">Capacidad: <span>50% (mitad es copia)</span></div>
+            <div class="raid-stat">Velocidad escritura: <span style="color:var(--warn)">⚠️ penalización leve</span></div>
+          </div>
+          <div class="raid-card">
+            <div class="raid-card-title">RAID 5 — Paridad dist.</div>
+            <div class="raid-card-nick">"El más eficaz para servidores"</div>
+            <div class="raid-disk-row">
+              <div class="raid-disk disk-data">D1</div>
+              <div class="raid-disk disk-data">D2</div>
+              <div class="raid-disk disk-parity">P</div>
+            </div>
+            <div class="raid-stat">Tolerancia: <span style="color:var(--success)">✅ 1 disco</span></div>
+            <div class="raid-stat">Capacidad: <span>80% (n-1 discos útiles)</span></div>
+            <div class="raid-stat">Velocidad: <span style="color:var(--success)">🚀 equivalente a RAID 0</span></div>
+          </div>
+          <div class="raid-card">
+            <div class="raid-card-title">RAID 0+1 / RAID 10</div>
+            <div class="raid-card-nick">"Ambos mundos"</div>
+            <div class="raid-disk-row">
+              <div class="raid-disk disk-data">D1</div>
+              <div class="raid-disk disk-data">D2</div>
+              <div class="raid-disk disk-mirror">D1'</div>
+              <div class="raid-disk disk-mirror">D2'</div>
+            </div>
+            <div class="raid-stat">Tolerancia: <span style="color:var(--success)">✅ varios discos</span></div>
+            <div class="raid-stat">Capacidad: <span>50%</span></div>
+            <div class="raid-stat">Coste: <span style="color:var(--danger)">💸 el más caro</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="resumen-section">
+      <div class="resumen-header" onclick="toggleSection(this)">
+        <div class="resumen-title"><div class="resumen-icon" style="background:rgba(167,139,250,0.1)">🖥️</div>RAID 1 en Windows Server — Pasos</div>
+        <div class="resumen-chevron">▼</div>
+      </div>
+      <div class="resumen-body">
+        <ul class="resumen-list">
+          <li class="cyan"><strong>1.</strong> Server Manager → Tools → Computer Management → Storage → Disk Management</li>
+          <li class="purple"><strong>2.</strong> Clic derecho sobre un disco → ver opciones: Spanned, Striped, <strong>Mirrored</strong>, RAID-5</li>
+          <li class="green"><strong>3.</strong> Seleccionar "New Mirrored Volume" → asistente Wizard</li>
+          <li class="orange"><strong>4.</strong> Añadir el segundo disco con "Add" → ajustar tamaño</li>
+          <li class="cyan"><strong>5.</strong> Asignar letra de unidad (ej. M: para Marketing, T: para Técnico)</li>
+          <li class="purple"><strong>6.</strong> Seleccionar sistema de archivos: <strong>NTFS</strong> (recomendado)</li>
+          <li class="green"><strong>7.</strong> Confirmar en resumen del Wizard → "Finish"</li>
+          <li class="orange"><strong>8.</strong> Aceptar conversión de discos a <strong>dinámicos</strong> → esperar % de progreso</li>
+          <li class="cyan"><strong>9.</strong> Verificar estado "Healthy" en Disk Management + nueva unidad en explorador</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="resumen-section">
+      <div class="resumen-header" onclick="toggleSection(this)">
+        <div class="resumen-title"><div class="resumen-icon" style="background:rgba(0,229,255,0.1)">🛡️</div>Tolerancia a Fallos — Conceptos clave</div>
+        <div class="resumen-chevron">▼</div>
+      </div>
+      <div class="resumen-body">
+        <table class="resumen-table">
+          <tr><th>Concepto</th><th>Descripción</th></tr>
+          <tr><td>Creación de reflejo</td><td>Mantiene copias idénticas de todos los datos. Similar a RAID-1. Bidireccional o tridireccional.</td></tr>
+          <tr><td>Paridad (XOR)</td><td>Codificación que permite reconstruir datos perdidos calculando el XOR de los demás discos.</td></tr>
+          <tr><td>Disco dinámico</td><td>Tipo de disco Windows que permite gestión avanzada de volúmenes (necesario para RAID por software).</td></tr>
+          <tr><td>Mirrored Volume</td><td>Nombre en Windows para RAID 1. Genera copia dinámica en tiempo real.</td></tr>
+          <tr><td>Hot spare</td><td>Disco de repuesto en espera. Se activa automáticamente si falla otro disco.</td></tr>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════ CHAT IA ══════════ -->
+<div id="view-chat" class="view">
+  <div class="mascot-wrap">
+    <div class="mascot">🦉</div>
+    <div>
+      <div class="mascot-name">BYTE · CHAT MODE</div>
+      <div class="mascot-bubble">¡Pregúntame lo que quieras sobre RAID! Soy experto en Unidad 3 🔧</div>
+    </div>
+  </div>
+  <div class="section-title">Chat con IA</div>
+  <div class="section-sub">// TUTOR ESPECIALIZADO EN UNIDAD 3 — RAID Y TOLERANCIA A FALLOS</div>
+  <div class="api-setup">
+    <label class="api-label">API KEY DE ANTHROPIC</label>
+    <div class="api-input-row">
+      <input type="password" class="api-input" id="api-key-input" placeholder="sk-ant-api03-..." />
+      <button class="btn btn-primary" onclick="saveKey()">Guardar</button>
+    </div>
+    <div style="font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:8px;">
+      La key se guarda en sessionStorage (solo en esta pestaña).
+    </div>
+  </div>
+  <div class="chat-suggestions">
+    <button class="suggestion" onclick="sendSuggestion(this)">¿Qué diferencia hay entre RAID 0 y RAID 1?</button>
+    <button class="suggestion" onclick="sendSuggestion(this)">¿Por qué RAID 5 es el más usado?</button>
+    <button class="suggestion" onclick="sendSuggestion(this)">¿Cómo funciona la paridad en RAID?</button>
+    <button class="suggestion" onclick="sendSuggestion(this)">¿Qué es un disco dinámico en Windows?</button>
+    <button class="suggestion" onclick="sendSuggestion(this)">Explícame RAID 0+1 vs RAID 10</button>
+    <button class="suggestion" onclick="sendSuggestion(this)">¿Cuándo usar RAID 6?</button>
+  </div>
+  <div class="chat-window" id="chat-window">
+    <div class="chat-empty" id="chat-empty">
+      <div class="chat-empty-icon">🦉</div>
+      <div class="chat-empty-text">Introduce tu API key y pregúntame cualquier cosa<br>sobre la Unidad 3 — RAID y tolerancia a fallos.</div>
+    </div>
+  </div>
+  <div class="chat-input-row">
+    <textarea class="chat-input" id="chat-input" placeholder="Pregunta algo sobre RAID... (Enter para enviar)" onkeydown="chatKeyDown(event)"></textarea>
+    <button class="btn btn-primary" onclick="sendChat()">Enviar →</button>
+  </div>
+</div>
+
+</main>
+
+<script>
+// ═══════════════════════════════════════════
+// GAMIFICATION ENGINE
+// ═══════════════════════════════════════════
+let xp = 0, level = 1, streak = 0, combo = 0;
+const XP_PER_LEVEL = 100;
+let fcXpGained = 0;
+let testXpGained = 0;
+
+const MASCOT_MESSAGES_IDLE = [
+  "¡Sigue así! Cada tarjeta es un paso más hacia el examen 💪",
+  "RAID 5 es el más importante para el examen, ojo 👀",
+  "Recuerda: RAID 0 = velocidad sin seguridad. RAID 1 = espejo. RAID 5 = lo mejor de los dos.",
+  "¿Sabías que RAID no es backup? ¡Eso suele caer en examen! 🎯",
+  "¡Vas genial! El profe preguntará cuántos discos mínimo necesita cada RAID.",
+  "XOR es la clave de la paridad. D1 XOR D2 = Paridad → si falla D1, D2 XOR P = D1 🧠",
+  "RAID 6 = dos discos de paridad. Puede fallar hasta 2 discos a la vez.",
+  "¡No te rindas! Cada flashcard correcta = +10 XP ⚡",
+];
+
+function gainXP(amount, label) {
+  xp += amount;
+  if(label) {
+    const popup = document.getElementById('xp-popup');
+    popup.textContent = `+${amount} XP ${label || '⚡'}`;
+    popup.classList.add('show');
+    setTimeout(() => popup.classList.remove('show'), 1500);
+  }
+  updateXPBar();
+  checkLevelUp();
+}
+
+function updateXPBar() {
+  const currentLevelXP = xp - (level - 1) * XP_PER_LEVEL;
+  const pct = Math.min((currentLevelXP / XP_PER_LEVEL) * 100, 100);
+  document.getElementById('xp-fill').style.width = pct + '%';
+  document.getElementById('xp-count').textContent = `${xp} / ${level * XP_PER_LEVEL}`;
+}
+
+function checkLevelUp() {
+  const newLevel = Math.floor(xp / XP_PER_LEVEL) + 1;
+  if (newLevel > level) {
+    level = newLevel;
+    showLevelUp();
+  }
+}
+
+function showLevelUp() {
+  spawnConfetti(60);
+  playSound('levelup');
+  document.getElementById('modal-emoji').textContent = ['🎉','🚀','⭐','🔥','💎'][Math.min(level-2,4)] || '🏆';
+  document.getElementById('modal-title').textContent = `¡NIVEL ${level}!`;
+  document.getElementById('modal-sub').textContent = `Has alcanzado el nivel ${level}. ¡Estás dominando RAID como un pro! 🦉`;
+  document.getElementById('modal-overlay').classList.add('show');
+}
+
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('show');
+}
+
+function updateStreak(correct) {
+  if (correct) {
+    streak++;
+    combo++;
+    document.getElementById('streak-count').textContent = streak;
+    updateCombo();
+  } else {
+    combo = 0;
+    updateCombo();
+  }
+}
+
+function updateCombo() {
+  const comboWrap = document.getElementById('combo-wrap');
+  if (combo >= 2) {
+    comboWrap.style.display = 'flex';
+    const multi = Math.min(combo, 5);
+    document.getElementById('combo-count').textContent = `x${multi}`;
+    document.getElementById('combo-multi').textContent = multi;
+  } else {
+    comboWrap.style.display = 'none';
+  }
+}
+
+function getComboMultiplier() {
+  return Math.min(combo, 5);
+}
+
+// ── SOUNDS (Web Audio API) ──
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let audioCtx;
+
+function initAudio() {
+  if (!audioCtx) audioCtx = new AudioCtx();
+}
+
+function playSound(type) {
+  try {
+    initAudio();
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.connect(g); g.connect(audioCtx.destination);
+    if (type === 'correct') {
+      o.frequency.setValueAtTime(523, audioCtx.currentTime);
+      o.frequency.setValueAtTime(659, audioCtx.currentTime + 0.1);
+      o.frequency.setValueAtTime(784, audioCtx.currentTime + 0.2);
+      g.gain.setValueAtTime(0.15, audioCtx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
+      o.start(); o.stop(audioCtx.currentTime + 0.5);
+    } else if (type === 'wrong') {
+      o.type = 'sawtooth';
+      o.frequency.setValueAtTime(200, audioCtx.currentTime);
+      o.frequency.setValueAtTime(150, audioCtx.currentTime + 0.15);
+      g.gain.setValueAtTime(0.12, audioCtx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.4);
+      o.start(); o.stop(audioCtx.currentTime + 0.4);
+    } else if (type === 'flip') {
+      o.type = 'sine';
+      o.frequency.setValueAtTime(880, audioCtx.currentTime);
+      g.gain.setValueAtTime(0.05, audioCtx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.15);
+      o.start(); o.stop(audioCtx.currentTime + 0.15);
+    } else if (type === 'levelup') {
+      const freqs = [523,659,784,1047];
+      freqs.forEach((f, i) => {
+        const o2 = audioCtx.createOscillator();
+        const g2 = audioCtx.createGain();
+        o2.connect(g2); g2.connect(audioCtx.destination);
+        o2.frequency.setValueAtTime(f, audioCtx.currentTime + i*0.12);
+        g2.gain.setValueAtTime(0.15, audioCtx.currentTime + i*0.12);
+        g2.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + i*0.12 + 0.3);
+        o2.start(audioCtx.currentTime + i*0.12);
+        o2.stop(audioCtx.currentTime + i*0.12 + 0.3);
+      });
+      return;
+    }
+  } catch(e) {}
+}
+
+// ── CONFETTI ──
+function spawnConfetti(count = 30) {
+  const colors = ['#00e5ff','#a78bfa','#34d399','#facc15','#f87171','#fb923c'];
+  for (let i = 0; i < count; i++) {
+    setTimeout(() => {
+      const el = document.createElement('div');
+      el.className = 'confetti-piece';
+      el.style.cssText = `
+        left: ${Math.random() * 100}vw;
+        top: -10px;
+        background: ${colors[Math.floor(Math.random()*colors.length)]};
+        width: ${6 + Math.random()*8}px;
+        height: ${6 + Math.random()*8}px;
+        border-radius: ${Math.random()>0.5?'50%':'2px'};
+        animation-duration: ${1 + Math.random()*1.5}s;
+        animation-delay: ${Math.random()*0.3}s;
+      `;
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 2500);
+    }, Math.random() * 300);
+  }
+}
+
+// ── MASCOT ──
+const mascotTips = MASCOT_MESSAGES_IDLE;
+let mascotTipIndex = 0;
+
+function mascotTalk() {
+  document.getElementById('mascot-bubble').textContent = mascotTips[mascotTipIndex % mascotTips.length];
+  mascotTipIndex++;
+  const m = document.getElementById('mascot');
+  m.classList.remove('happy','sad');
+  void m.offsetWidth;
+  m.classList.add('happy');
+  setTimeout(() => m.classList.remove('happy'), 600);
+}
+
+function mascotReact(correct) {
+  const msgs_ok = ["¡Perfecto! 🎯","¡Eso es! Lo tenías claro 💪","¡Correcto! +XP para ti ⚡","¡Crack total! 🦉"];
+  const msgs_bad = ["¡Casi! Repasa este concepto 📖","No pasa nada, sigue intentándolo 💙","Este es complicado. ¡Vuelve al resumen! 📚","¡Error! Pero aprendes del error 🔄"];
+  const bubble = document.getElementById('mascot-bubble-test') || document.getElementById('mascot-bubble');
+  if(bubble) bubble.textContent = correct
+    ? msgs_ok[Math.floor(Math.random()*msgs_ok.length)]
+    : msgs_bad[Math.floor(Math.random()*msgs_bad.length)];
+  const m = document.getElementById('mascot-test') || document.getElementById('mascot');
+  if(m) {
+    m.classList.remove('happy','sad');
+    void m.offsetWidth;
+    m.classList.add(correct ? 'happy' : 'sad');
+    setTimeout(() => m.classList.remove('happy','sad'), 600);
+  }
+}
+
+// ═══════════════════════════════════════════
+// FLASHCARDS DATA
+// ═══════════════════════════════════════════
+const FLASHCARDS = [
+  {term:"RAID",def:"Redundant Array of Independent Disks. Combina múltiples discos para formar una unidad lógica con mayor integridad, tolerancia a fallos, rendimiento y capacidad que un disco solo."},
+  {term:"RAID Hardware",def:"Implementa RAID mediante controladores físicos PCI. Independiente del SO, más rápido y con mayor integridad. La mayoría de servidores modernos lo incluyen en la propia placa."},
+  {term:"RAID Software",def:"El SO gestiona el RAID. Más económico pero dependiente de la plataforma. Menor rendimiento que el hardware."},
+  {term:"RAID 0 — Striping",def:"Datos distribuidos en bloques entre todos los discos. Máxima transferencia pero SIN tolerancia a fallos. Si falla un disco, se pierden todos los datos. Mínimo 2 discos."},
+  {term:"RAID 1 — Mirroring",def:"Copia idéntica de datos en disco adicional. Redundancia total. Penaliza levemente la escritura. Mínimo 2 discos. Ideal para servidores de archivos pequeños."},
+  {term:"RAID 2 — Hamming",def:"Acceso paralelo con código de Hamming (ECC). Accede a todos los discos simultáneamente. Poco usado en la actualidad, no usa discos estándar."},
+  {term:"RAID 3 — Paridad síncrona",def:"Disco único dedicado a paridad (XOR). Acceso síncrono a todos los discos. Malo para múltiples usuarios simultáneos pero bueno para ficheros grandes. Mínimo 3 discos."},
+  {term:"RAID 4 — Paridad independiente",def:"Similar a RAID 3 pero acceso independiente a cada disco. Ideal para ficheros grandes y apps gráficas. Ventaja sobre RAID 3: acceso individual a discos. Mínimo 3 discos."},
+  {term:"RAID 5 — Paridad distribuida",def:"Paridad distribuida entre TODOS los discos (sin disco dedicado). El más eficaz para servidores multiusuario. Velocidad equivalente a RAID 0. Usa 80% de la capacidad total. Mínimo 3 discos."},
+  {term:"RAID 6 — Doble paridad",def:"Similar a RAID 5 pero con segundo esquema de paridad distribuida. Tolera el fallo de hasta 2 discos simultáneamente. Máxima redundancia. Mínimo 3 discos."},
+  {term:"RAID 0+1 / RAID 10",def:"Combinación de RAID 0 (striping) + RAID 1 (mirror). Velocidad + redundancia. Mínimo 4 discos. Los discos van en pares. El más rápido y seguro pero también el más caro."},
+  {term:"Paridad (XOR)",def:"Mecanismo de recuperación. XOR de todos los discos de datos = paridad. Si falla un disco: XOR de los demás + paridad = datos recuperados. Usado en RAID 3, 4, 5, 6."},
+  {term:"Creación de reflejo",def:"Tolerancia a errores manteniendo copias de todos los datos. Bidireccional o tridireccional. Escribe los datos en su totalidad en varios discos físicos independientes."},
+  {term:"Disco dinámico",def:"Tipo de disco en Windows necesario para implementar RAID por software. Se convierte desde 'básico' durante la configuración del Mirror Volume."},
+  {term:"Mirrored Volume",def:"Nombre en Windows Server para RAID 1. Se configura en Computer Management → Disk Management. Genera copia dinámica en tiempo real de todos los datos."},
+  {term:"Discos SSD en servidores",def:"La mejor opción si hay presupuesto. Mayor velocidad (RPM más rápidas), más I/O, más fiables. En servidores se prefieren los SSD de versión servidor. Más caros que SCSI/SAS."},
+  {term:"Discos SCSI/SAS",def:"Especialmente mejorados para servidores. Los IDE/SATA baratos NO están preparados para servidor. Si el servidor usa IDE, hay que cambiarlos por SCSI, SAS o SSD."},
+  {term:"Importancia de la información",def:"La información es el activo más valioso de una empresa. Debe estar disponible 24x7x365. El coste de pérdida de datos y tiempo de inactividad hace imprescindible un sistema tolerante a fallos."},
+  {term:"Tolerancia a fallos",def:"Capacidad del sistema para seguir funcionando cuando falla un componente. RAID proporciona tolerancia a fallos de disco. La creación de reflejo y la paridad son los dos mecanismos principales."},
+  {term:"Disco de paridad dedicado (RAID 3/4)",def:"Un solo disco almacena la paridad calculada de los demás. Cuello de botella en escrituras simultáneas. RAID 5 lo soluciona distribuyendo la paridad entre todos los discos."},
+  {term:"Capacidad útil RAID",def:"RAID 0: 100%. RAID 1: 50%. RAID 5: (n-1)/n discos. RAID 6: (n-2)/n. RAID 10: 50%. Cuantos más discos en RAID 5/6, mayor eficiencia de capacidad."},
+  {term:"Pasos RAID 1 en Windows Server",def:"1) Computer Management → Disk Management 2) Clic derecho disco → New Mirrored Volume 3) Wizard: añadir disco, asignar letra, NTFS 4) Aceptar conversión a dinámico 5) Verificar 'Healthy'"},
+];
+
+let fcIndex = 0, fcScores = {bien:0, mal:0};
+let fcOrder = [...Array(FLASHCARDS.length).keys()];
+
+function renderCard() {
+  const c = FLASHCARDS[fcOrder[fcIndex]];
+  document.getElementById('fc-term').textContent = c.term;
+  document.getElementById('fc-def').textContent = c.def;
+  document.getElementById('fc-current').textContent = fcIndex+1;
+  document.getElementById('fc-progress').style.width = ((fcIndex+1)/FLASHCARDS.length*100)+'%';
+  document.getElementById('card-scene').classList.remove('flipped');
+}
+
+function flipCard() {
+  playSound('flip');
+  document.getElementById('card-scene').classList.toggle('flipped');
+}
+
+function nextCard(){ if(fcIndex<FLASHCARDS.length-1){fcIndex++;renderCard();} }
+function prevCard(){ if(fcIndex>0){fcIndex--;renderCard();} }
+
+function markCard(r) {
+  fcScores[r]++;
+  document.getElementById('fc-'+r).textContent=(r==='bien'?'✓ ':'✗ ')+fcScores[r];
+  if(r==='bien'){
+    gainXP(10, '⚡');
+    fcXpGained += 10;
+    document.getElementById('fc-xp-tag').textContent = `⚡ ${fcXpGained} XP ganados`;
+    playSound('correct');
+    const m = document.getElementById('mascot');
+    m.classList.remove('happy','sad'); void m.offsetWidth; m.classList.add('happy');
+    setTimeout(()=>m.classList.remove('happy'),600);
+  } else {
+    playSound('wrong');
+    const m = document.getElementById('mascot');
+    m.classList.remove('happy','sad'); void m.offsetWidth; m.classList.add('sad');
+    setTimeout(()=>m.classList.remove('sad'),600);
+  }
+  nextCard();
+}
+
+function shuffleCards(){
+  for(let i=fcOrder.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[fcOrder[i],fcOrder[j]]=[fcOrder[j],fcOrder[i]];}
+  fcIndex=0;renderCard();
+}
+function resetCards(){
+  fcIndex=0;fcScores={bien:0,mal:0};fcOrder=[...Array(FLASHCARDS.length).keys()];
+  document.getElementById('fc-bien').textContent='✓ 0';
+  document.getElementById('fc-mal').textContent='✗ 0';
+  fcXpGained=0;
+  document.getElementById('fc-xp-tag').textContent='⚡ 0 XP ganados';
+  renderCard();
+}
+renderCard();
+
+// ═══════════════════════════════════════════
+// TEST DATA
+// ═══════════════════════════════════════════
+const QUESTIONS = [
+  {q:"¿Cuál es la principal DESVENTAJA de RAID 0 frente a los demás niveles?",opts:["Usa demasiada capacidad en paridad","No tiene tolerancia a fallos: si falla un disco se pierden todos los datos","Solo permite 2 discos como máximo","Es el más lento en transferencia"],correct:1,exp:"<strong>RAID 0 (Striping)</strong> no ofrece ninguna redundancia. Si falla cualquier disco, se pierden TODOS los datos. A cambio, tiene la máxima velocidad de transferencia."},
+  {q:"¿Cuántos discos son el MÍNIMO para implementar RAID 5?",opts:["2","4","3","5"],correct:2,exp:"<strong>RAID 5</strong> necesita mínimo <strong>3 discos</strong>: al menos 2 para datos y 1 equivalente para paridad distribuida entre todos."},
+  {q:"En RAID 1 (Mirroring), si tienes 2 discos de 1TB, ¿cuánta capacidad útil tendrás?",opts:["2 TB","1 TB","500 GB","1.5 TB"],correct:1,exp:"En <strong>RAID 1</strong> la capacidad útil es del <strong>50%</strong>. Con 2 discos de 1TB, tienes 1TB útil porque el otro disco es la copia exacta."},
+  {q:"¿Qué nivel RAID es el MÁS UTILIZADO en servidores empresariales multiusuario?",opts:["RAID 0","RAID 1","RAID 6","RAID 5"],correct:3,exp:"<strong>RAID 5</strong> es el nivel más usado en servidores. Combina la velocidad equivalente a RAID 0 con tolerancia a 1 fallo de disco, usando solo 1 disco equivalente para paridad distribuida."},
+  {q:"¿Qué ocurre con la velocidad de escritura en RAID 1 comparado con un disco solo?",opts:["Es el doble de rápido","Igual velocidad","Hay una leve penalización porque debe escribir en 2 discos","Es muchísimo más lento"],correct:2,exp:"<strong>RAID 1</strong> penaliza levemente la escritura porque debe escribir los mismos datos en ambos discos simultáneamente. La lectura puede ser más rápida."},
+  {q:"En RAID 5 con 5 discos de 1TB, ¿cuál es la capacidad útil aproximada?",opts:["5 TB","4 TB","3 TB","2.5 TB"],correct:1,exp:"En <strong>RAID 5</strong> la capacidad útil es (n-1) discos. Con 5 discos de 1TB: 5-1 = <strong>4TB útiles</strong>. El equivalente de 1 disco se destina a paridad distribuida."},
+  {q:"¿Qué mecanismo usa RAID 5 para recuperar datos cuando falla un disco?",opts:["Copia espejo del disco dañado","Cálculo XOR de los datos restantes y la paridad distribuida","Backup en cinta magnética","Reconstrucción desde el disco de arranque"],correct:1,exp:"RAID 5 usa <strong>XOR (OR exclusivo)</strong>. La paridad se calcula como: D1 XOR D2 XOR D3 = P. Si falla D1: D2 XOR D3 XOR P = D1 recuperado."},
+  {q:"¿Cuántos discos puede fallar simultáneamente en RAID 6 sin perder datos?",opts:["1","3","2","4"],correct:2,exp:"<strong>RAID 6</strong> tiene DOS esquemas de paridad distribuida, lo que permite tolerar el fallo de <strong>hasta 2 discos</strong> a la vez sin perder datos."},
+  {q:"Para configurar RAID 1 por software en Windows Server, ¿los discos necesitan ser...?",opts:["Discos básicos","Discos dinámicos","Discos SSD obligatoriamente","Discos SCSI exclusivamente"],correct:1,exp:"En Windows Server, el RAID por software requiere <strong>discos dinámicos</strong>. Durante la creación del Mirrored Volume, el asistente pide convertir los discos básicos a dinámicos."},
+  {q:"¿Cuál es la principal ventaja del RAID 0+1 (RAID 10) sobre RAID 5?",opts:["Usa menos discos","Es más barato","Combina máximo rendimiento (striping) con máxima redundancia (mirror)","Tiene mayor capacidad útil"],correct:2,exp:"<strong>RAID 10</strong> combina RAID 0 (striping para velocidad) + RAID 1 (mirror para redundancia). Es el más rápido Y más seguro, pero requiere mínimo 4 discos y tiene 50% de capacidad útil, siendo el más caro."},
+];
+
+let qIndex=0, qCorrect=0, qWrong=0, qAnswered=false;
+let qOrder=[...Array(QUESTIONS.length).keys()];
+let lives = 3;
+
+function renderHearts() {
+  for(let i=1;i<=3;i++){
+    document.getElementById('h'+i).classList.toggle('lost', i > lives);
+  }
+}
+
+function renderQuestion() {
+  const q=QUESTIONS[qOrder[qIndex]];
+  document.getElementById('q-num').textContent=qIndex+1;
+  document.getElementById('q-correct').textContent=qCorrect;
+  document.getElementById('q-wrong').textContent=qWrong;
+  document.getElementById('q-label').textContent='PREGUNTA '+String(qIndex+1).padStart(2,'0');
+  document.getElementById('q-text').textContent=q.q;
+  const optsEl=document.getElementById('q-options');
+  optsEl.innerHTML='';
+  q.opts.forEach((opt,i)=>{
+    const div=document.createElement('div');
+    div.className='option';
+    div.innerHTML=`<span class="option-letter">${['A','B','C','D'][i]}</span><span>${opt}</span>`;
+    div.onclick=()=>answerQuestion(i,div);
+    optsEl.appendChild(div);
+  });
+  const qcard = document.getElementById('question-card');
+  qcard.classList.remove('correct-border','wrong-border');
+  document.getElementById('q-explanation').classList.remove('show');
+  document.getElementById('btn-next-q').style.display='none';
+  qAnswered=false;
+}
+
+function answerQuestion(selected) {
+  if(qAnswered)return;
+  qAnswered=true;
+  const q=QUESTIONS[qOrder[qIndex]];
+  const opts=document.querySelectorAll('.option');
+  const correct = selected === q.correct;
+  opts.forEach((o,i)=>{
+    o.classList.add('disabled');
+    if(i===q.correct) o.classList.add('correct');
+    else if(i===selected&&!correct) o.classList.add('wrong');
+  });
+
+  const qcard = document.getElementById('question-card');
+  if(correct) {
+    qCorrect++;
+    qcard.classList.add('correct-border');
+    const xpGain = 10 * getComboMultiplier();
+    gainXP(xpGain, combo >= 2 ? `🔥 x${getComboMultiplier()}` : '⚡');
+    testXpGained += xpGain;
+    playSound('correct');
+    if(combo >= 2) spawnConfetti(20);
+  } else {
+    qWrong++;
+    qcard.classList.add('wrong-border');
+    lives = Math.max(0, lives - 1);
+    renderHearts();
+    playSound('wrong');
+    if(lives === 0) {
+      setTimeout(() => {
+        document.getElementById('mascot-bubble-test').textContent = '¡Sin vidas! Pero el conocimiento queda 🧠 Revisa el resumen y vuelve a intentarlo.';
+      }, 500);
+    }
+  }
+
+  updateStreak(correct);
+  mascotReact(correct);
+  document.getElementById('q-correct').textContent=qCorrect;
+  document.getElementById('q-wrong').textContent=qWrong;
+  const exp=document.getElementById('q-explanation');
+  exp.innerHTML='💡 '+q.exp;
+  exp.classList.add('show');
+  if(qIndex<QUESTIONS.length-1) document.getElementById('btn-next-q').style.display='inline-block';
+  else setTimeout(showResults,1200);
+}
+
+function nextQuestion(){ qIndex++; renderQuestion(); }
+
+function showResults() {
+  document.getElementById('test-body').style.display='none';
+  document.getElementById('result-box').classList.add('show');
+  const pct=Math.round(qCorrect/QUESTIONS.length*100);
+  document.getElementById('result-score').textContent=pct+'%';
+  document.getElementById('result-xp').textContent=`⚡ +${testXpGained} XP ganados en este test`;
+  let label,color,emoji;
+  if(pct>=80){label='🎉 ¡Dominas RAID! Estás listo para el examen';color='var(--success)';emoji='🦉🏆';spawnConfetti(80);}
+  else if(pct>=60){label='📖 Bien, repasa los niveles RAID antes del examen';color='var(--warn)';emoji='💪';}
+  else{label='🔁 Vuelve al resumen y dale otra vez. ¡Tú puedes!';color='var(--danger)';emoji='📚';}
+  document.getElementById('result-score').style.color=color;
+  document.getElementById('result-mascot').textContent=emoji;
+  document.getElementById('result-label').textContent=qCorrect+' correctas de '+QUESTIONS.length+' — '+label;
+}
+
+function resetTest(){
+  qIndex=0;qCorrect=0;qWrong=0;qAnswered=false;lives=3;combo=0;testXpGained=0;
+  renderHearts();updateCombo();
+  for(let i=qOrder.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[qOrder[i],qOrder[j]]=[qOrder[j],qOrder[i]];}
+  document.getElementById('test-body').style.display='block';
+  document.getElementById('result-box').classList.remove('show');
+  document.getElementById('mascot-bubble-test').textContent='¡Hora de demostrar lo que sabes! Cada respuesta correcta te da XP. ¡Sin presión... bueno, un poco! 😅';
+  renderQuestion();
+}
+renderQuestion();
+
+// ═══════════════════════════════════════════
+// RESUMEN
+// ═══════════════════════════════════════════
+function toggleSection(hdr){ hdr.parentElement.classList.toggle('open'); }
+
+// ═══════════════════════════════════════════
+// CHAT IA
+// ═══════════════════════════════════════════
+const SYSTEM_PROMPT=`Eres Byte, un tutor experto y amigable en Implantación de Sistemas Operativos del ciclo ASIR. Ayudas al alumno a estudiar la Unidad 3: "Asegurar la Información del Sistema — RAID y Tolerancia a Fallos".
+
+Contenido de la unidad:
+- Qué es RAID: Redundant Array of Independent Disks
+- RAID hardware vs software: ventajas, diferencias
+- Tipos de disco: IDE/SATA (no recomendado servidores), SCSI/SAS, SSD
+- Niveles RAID: 0 (Striping, sin tolerancia), 1 (Mirroring, espejo), 2 (Hamming/ECC, obsoleto), 3 (paridad síncrona dedicada), 4 (paridad independiente), 5 (paridad distribuida, el más usado), 6 (doble paridad), 0+1/10 (stripe+mirror)
+- Capacidades útiles: RAID0=100%, RAID1=50%, RAID5=(n-1)/n, RAID6=(n-2)/n
+- Tolerancias: RAID0=0 discos, RAID1=1, RAID5=1, RAID6=2
+- Paridad XOR: D1 XOR D2 XOR... = P. Recuperación: P XOR resto = disco perdido
+- Creación de reflejo: bidireccional y tridireccional
+- Configuración RAID 1 en Windows Server: Computer Management, Disk Management, New Mirrored Volume, discos dinámicos, NTFS
+- Importancia de la disponibilidad de la información: 24x7x365
+
+Responde de forma clara, pedagógica y con emojis ocasionales. Usa ejemplos concretos. Si el alumno pregunta fuera de esta unidad, redirige amablemente. Sé conciso. Cuando sea relevante, menciona que esto puede caer en el examen.`;
+
+let chatHistory=[];
+let apiKey=sessionStorage.getItem('studyos_key')||'';
+if(apiKey) document.getElementById('api-key-input').value=apiKey;
+
+function saveKey(){
+  const k=document.getElementById('api-key-input').value.trim();
+  if(!k)return;
+  apiKey=k;
+  sessionStorage.setItem('studyos_key',k);
+  addMsg('system','✓ API key guardada. ¡Ya puedes preguntarme sobre RAID, Byte al habla! 🦉');
+}
+
+function addMsg(role,text){
+  const win=document.getElementById('chat-window');
+  const emp=document.getElementById('chat-empty');
+  if(emp)emp.remove();
+  const div=document.createElement('div');
+  if(role==='user'){ div.className='msg msg-user'; div.innerHTML=`<div class="msg-sender">TÚ</div>${text}`; }
+  else { div.className='msg msg-ai'; div.innerHTML=`<div class="msg-sender">${role==='system'?'SISTEMA':'BYTE 🦉'}</div>${fmt(text)}`; }
+  win.appendChild(div);
+  win.scrollTop=win.scrollHeight;
+}
+
+function fmt(t){
+  return t.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/`(.*?)`/g,'<code>$1</code>').replace(/\n/g,'<br>');
+}
+
+function addTyping(){
+  const win=document.getElementById('chat-window');
+  const d=document.createElement('div');
+  d.className='msg msg-ai';d.id='typing-ind';
+  d.innerHTML=`<div class="msg-sender">BYTE 🦉</div><div class="typing"><span></span><span></span><span></span></div>`;
+  win.appendChild(d);win.scrollTop=win.scrollHeight;
+}
+
+async function sendChat(){
+  const input=document.getElementById('chat-input');
+  const text=input.value.trim();
+  if(!text)return;
+  if(!apiKey){addMsg('system','⚠️ Introduce tu API key primero.');return;}
+  input.value='';
+  addMsg('user',text);
+  chatHistory.push({role:'user',content:text});
+  addTyping();
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:SYSTEM_PROMPT,messages:chatHistory})
+    });
+    const data=await res.json();
+    const ind=document.getElementById('typing-ind');if(ind)ind.remove();
+    if(data.error){addMsg('system','⚠️ Error: '+data.error.message);chatHistory.pop();return;}
+    const reply=data.content[0].text;
+    chatHistory.push({role:'assistant',content:reply});
+    addMsg('ai',reply);
+  }catch(err){
+    const ind=document.getElementById('typing-ind');if(ind)ind.remove();
+    addMsg('system','⚠️ Error de red: '+err.message);chatHistory.pop();
+  }
+}
+
+function sendSuggestion(btn){ document.getElementById('chat-input').value=btn.textContent; sendChat(); }
+function chatKeyDown(e){ if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendChat();} }
+
+// ═══════════════════════════════════════════
+// NAV
+// ═══════════════════════════════════════════
+function switchView(view,btn){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('view-'+view).classList.add('active');
+  if(btn)btn.classList.add('active');
+}
+</script>
+</body>
+</html>

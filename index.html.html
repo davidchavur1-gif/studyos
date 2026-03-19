@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StudyOS 🍆💧 ASIR</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --pink: #ffb3d9; --pink2: #ff80c0; --pink3: #ffc2e0;
+  --blue: #a8d8f0; --blue2: #7ec8e3; --blue3: #c5e8f7;
+  --mint: #b8f0d8; --lav: #d4b8f0; --yellow: #fff0a0; --peach: #ffd4a8;
+  --mono: 'JetBrains Mono', monospace; --sans: 'Syne', sans-serif;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:var(--sans); min-height:100vh; overflow-x:hidden; background:#1a0a2e; cursor:none; }
+
+.bg-layer { position:fixed;inset:0;z-index:0;background:linear-gradient(135deg,#2d0a4e,#0a1a3e,#1a0a2e,#3d0a3e,#0a2a1e);background-size:400% 400%;animation:bgShift 8s ease infinite; }
+@keyframes bgShift{0%{background-position:0% 50%}25%{background-position:100% 0%}50%{background-position:100% 100%}75%{background-position:0% 100%}100%{background-position:0% 50%}}
+
+.noise { position:fixed;inset:0;z-index:1;pointer-events:none;opacity:0.055;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");background-size:180px;animation:noiseMove 0.4s steps(2) infinite; }
+@keyframes noiseMove{0%{transform:translate(0,0)}25%{transform:translate(-2px,2px)}50%{transform:translate(2px,-2px)}75%{transform:translate(-2px,-2px)}100%{transform:translate(2px,2px)}}
+
+.scanlines { position:fixed;inset:0;z-index:2;pointer-events:none;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(255,180,220,0.025) 3px,rgba(255,180,220,0.025) 4px); }
+
+.emoji-bg { position:fixed;inset:0;z-index:3;pointer-events:none;overflow:hidden; }
+.float-emoji { position:absolute;animation:floatUp linear infinite;opacity:0.16;user-select:none; }
+@keyframes floatUp{0%{transform:translateY(110vh) rotate(0deg);opacity:0}10%{opacity:0.16}90%{opacity:0.16}100%{transform:translateY(-10vh) rotate(360deg);opacity:0}}
+
+.star-particle { position:fixed;pointer-events:none;z-index:4;animation:twinkle linear infinite; }
+@keyframes twinkle{0%,100%{opacity:0;transform:scale(0) rotate(0deg)}40%,60%{opacity:1;transform:scale(1) rotate(180deg)}}
+
+.cursor { position:fixed;width:36px;height:36px;pointer-events:none;z-index:99999;font-size:26px;transform:translate(-50%,-50%);animation:cursorSpin 3s linear infinite; }
+@keyframes cursorSpin{0%{transform:translate(-50%,-50%) rotate(0deg)}100%{transform:translate(-50%,-50%) rotate(360deg)}}
+
+.pulse-ring { position:fixed;border-radius:50%;pointer-events:none;z-index:5;animation:ringExpand 5s ease-out infinite; }
+@keyframes ringExpand{0%{transform:translate(-50%,-50%) scale(0);opacity:0.5}100%{transform:translate(-50%,-50%) scale(6);opacity:0}}
+
+.content { position:relative;z-index:10; }
+
+header { padding:16px 32px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;border-bottom:2px solid rgba(255,179,217,0.25);background:rgba(20,5,40,0.88);backdrop-filter:blur(20px);position:sticky;top:0;z-index:200;box-shadow:0 2px 40px rgba(255,100,180,0.12); }
+.logo { font-family:var(--mono);font-size:20px;font-weight:700;display:flex;align-items:center;gap:10px;animation:logoRainbow 3s linear infinite; }
+@keyframes logoRainbow{0%{color:var(--pink2);text-shadow:0 0 18px var(--pink2)}25%{color:var(--blue2);text-shadow:0 0 18px var(--blue2)}50%{color:var(--mint);text-shadow:0 0 18px var(--mint)}75%{color:var(--lav);text-shadow:0 0 18px var(--lav)}100%{color:var(--pink2);text-shadow:0 0 18px var(--pink2)}}
+.logo-dot { width:11px;height:11px;border-radius:50%;animation:dotRainbow 1s linear infinite;box-shadow:0 0 14px currentColor; }
+@keyframes dotRainbow{0%{background:var(--pink2)}25%{background:var(--blue2)}50%{background:var(--mint)}75%{background:var(--lav)}100%{background:var(--pink2)}}
+
+.header-badges { display:flex;gap:8px;flex-wrap:wrap;align-items:center; }
+.hbadge { font-family:var(--mono);font-size:11px;font-weight:700;padding:5px 12px;border-radius:20px;letter-spacing:0.5px;animation:badgePop 2s ease-in-out infinite alternate; }
+@keyframes badgePop{0%{transform:scale(1)}100%{transform:scale(1.07)}}
+.hp { background:rgba(255,128,192,0.18);border:1px solid var(--pink2);color:var(--pink2); }
+.hb { background:rgba(126,200,227,0.18);border:1px solid var(--blue2);color:var(--blue2);animation-delay:0.2s; }
+.hm { background:rgba(184,240,216,0.18);border:1px solid var(--mint);color:var(--mint);animation-delay:0.4s; }
+.hy { background:rgba(250,204,21,0.15);border:1px solid #facc15;color:#facc15;animation-delay:0.6s; }
+
+.hero { text-align:center;padding:72px 24px 40px; }
+.hero-emoji-big { font-size:80px;display:block;margin-bottom:18px;animation:heroBounce 1.2s ease-in-out infinite alternate;filter:drop-shadow(0 0 30px rgba(255,128,192,0.7)); }
+@keyframes heroBounce{0%{transform:translateY(0) scale(1)}100%{transform:translateY(-18px) scale(1.06)}}
+.hero-title { font-size:clamp(44px,9vw,88px);font-weight:800;letter-spacing:-2px;line-height:1;margin-bottom:14px;background:linear-gradient(135deg,var(--pink2),var(--blue2),var(--mint),var(--lav),var(--peach),var(--pink2));background-size:300%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:shimmer 3.5s linear infinite; }
+@keyframes shimmer{0%{background-position:0%}100%{background-position:300%}}
+.hero-sub { font-family:var(--mono);font-size:13px;color:rgba(255,210,235,0.65);letter-spacing:2px;margin-bottom:28px;animation:glowSub 2s ease-in-out infinite alternate; }
+@keyframes glowSub{0%{text-shadow:none}100%{text-shadow:0 0 20px rgba(255,180,220,0.5)}}
+.hero-emoji-row { display:flex;gap:6px;justify-content:center;flex-wrap:wrap;font-size:30px;animation:emojiSpread 1.5s ease-in-out infinite alternate; }
+@keyframes emojiSpread{0%{gap:6px}100%{gap:14px}}
+
+.marquee-wrap { overflow:hidden;width:100%;border-top:1px solid rgba(255,179,217,0.18);border-bottom:1px solid rgba(255,179,217,0.18);background:rgba(255,128,192,0.05);padding:10px 0;margin-bottom:56px; }
+.marquee-track { display:flex;gap:28px;width:max-content;animation:marquee 16s linear infinite;font-family:var(--mono);font-size:12px;color:rgba(255,210,240,0.55);letter-spacing:1px;white-space:nowrap; }
+@keyframes marquee{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+
+.units-section { padding:0 28px 80px;max-width:980px;margin:0 auto; }
+.units-label { font-family:var(--mono);font-size:11px;letter-spacing:3px;color:rgba(255,200,235,0.45);text-align:center;margin-bottom:36px;text-transform:uppercase; }
+
+.units-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(420px,1fr));gap:22px; }
+
+.unit-card { position:relative;border-radius:24px;padding:30px;text-decoration:none;display:block;overflow:hidden;transition:transform 0.35s cubic-bezier(0.34,1.56,0.64,1),box-shadow 0.3s;cursor:none;border:1.5px solid transparent; }
+.unit-card:hover { transform:translateY(-10px) scale(1.02); }
+
+.card-1 { background:linear-gradient(135deg,rgba(255,179,217,0.1),rgba(255,128,192,0.05));border-color:rgba(255,128,192,0.3);box-shadow:0 6px 36px rgba(255,128,192,0.12); }
+.card-2 { background:linear-gradient(135deg,rgba(168,216,240,0.1),rgba(126,200,227,0.05));border-color:rgba(126,200,227,0.3);box-shadow:0 6px 36px rgba(126,200,227,0.12); }
+.card-3 { background:linear-gradient(135deg,rgba(212,184,240,0.1),rgba(180,140,220,0.05));border-color:rgba(180,140,220,0.3);box-shadow:0 6px 36px rgba(180,140,220,0.12); }
+.card-4 { background:linear-gradient(135deg,rgba(184,240,216,0.1),rgba(100,220,160,0.05));border-color:rgba(100,220,160,0.3);box-shadow:0 6px 36px rgba(100,220,160,0.12); }
+
+.card-1:hover { box-shadow:0 20px 60px rgba(255,128,192,0.35);border-color:var(--pink2); }
+.card-2:hover { box-shadow:0 20px 60px rgba(126,200,227,0.35);border-color:var(--blue2); }
+.card-3:hover { box-shadow:0 20px 60px rgba(180,140,220,0.35);border-color:var(--lav); }
+.card-4:hover { box-shadow:0 20px 60px rgba(100,220,160,0.35);border-color:var(--mint); }
+
+/* animated border glow on hover */
+.unit-card::after { content:'';position:absolute;inset:-1px;border-radius:25px;opacity:0;transition:opacity 0.3s;z-index:-1; }
+.card-1::after { background:linear-gradient(135deg,var(--pink2),var(--lav),var(--blue2),var(--pink2));background-size:300%; animation:borderAnim 3s linear infinite; }
+.card-2::after { background:linear-gradient(135deg,var(--blue2),var(--mint),var(--yellow),var(--blue2));background-size:300%;animation:borderAnim 3s linear infinite; }
+.card-3::after { background:linear-gradient(135deg,var(--lav),var(--pink2),var(--mint),var(--lav));background-size:300%;animation:borderAnim 3s linear infinite; }
+.card-4::after { background:linear-gradient(135deg,var(--mint),var(--blue2),var(--lav),var(--mint));background-size:300%;animation:borderAnim 3s linear infinite; }
+.unit-card:hover::after { opacity:0.6; }
+@keyframes borderAnim{0%{background-position:0%}100%{background-position:300%}}
+
+.card-num { font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:3px;margin-bottom:14px;opacity:0.6; }
+.card-1 .card-num{color:var(--pink2)} .card-2 .card-num{color:var(--blue2)} .card-3 .card-num{color:var(--lav)} .card-4 .card-num{color:var(--mint)}
+
+.card-emoji { font-size:50px;display:block;margin-bottom:12px;animation:cardFloat 2.5s ease-in-out infinite alternate; }
+@keyframes cardFloat{0%{transform:scale(1) rotate(-4deg)}100%{transform:scale(1.1) rotate(4deg)}}
+
+.card-title { font-size:22px;font-weight:800;color:#fff;margin-bottom:8px;line-height:1.2; }
+.card-desc { font-size:13px;color:rgba(255,220,240,0.6);line-height:1.6;margin-bottom:18px; }
+
+.card-tags { display:flex;flex-wrap:wrap;gap:5px;margin-bottom:18px; }
+.ctag { font-family:var(--mono);font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;letter-spacing:0.5px; }
+.card-1 .ctag{background:rgba(255,128,192,0.18);color:var(--pink2);border:1px solid rgba(255,128,192,0.28)}
+.card-2 .ctag{background:rgba(126,200,227,0.18);color:var(--blue2);border:1px solid rgba(126,200,227,0.28)}
+.card-3 .ctag{background:rgba(180,140,220,0.18);color:var(--lav);border:1px solid rgba(180,140,220,0.28)}
+.card-4 .ctag{background:rgba(100,220,160,0.18);color:var(--mint);border:1px solid rgba(100,220,160,0.28)}
+
+.card-progress { margin-bottom:18px; }
+.prog-label { font-family:var(--mono);font-size:10px;color:rgba(255,220,240,0.4);margin-bottom:5px;letter-spacing:1px; }
+.prog-track { height:5px;background:rgba(255,255,255,0.07);border-radius:10px;overflow:hidden; }
+.prog-fill { height:100%;border-radius:10px;animation:progGlow 2s ease-in-out infinite alternate; }
+.card-1 .prog-fill{background:linear-gradient(90deg,var(--pink2),var(--lav));box-shadow:0 0 8px var(--pink2)}
+.card-2 .prog-fill{background:linear-gradient(90deg,var(--blue2),var(--mint));box-shadow:0 0 8px var(--blue2)}
+.card-3 .prog-fill{background:linear-gradient(90deg,var(--lav),var(--pink2));box-shadow:0 0 8px var(--lav)}
+.card-4 .prog-fill{background:linear-gradient(90deg,var(--mint),var(--blue2));box-shadow:0 0 8px var(--mint)}
+@keyframes progGlow{0%{filter:brightness(1)}100%{filter:brightness(1.5)}}
+
+.card-footer { display:flex;align-items:center;justify-content:space-between; }
+.card-stats { display:flex;gap:14px; }
+.stat { font-family:var(--mono);font-size:11px;color:rgba(255,220,240,0.45); }
+.stat span { color:#fff;font-weight:700; }
+
+.card-btn { font-family:var(--mono);font-size:12px;font-weight:700;padding:10px 22px;border-radius:12px;border:none;cursor:none;letter-spacing:0.5px;transition:all 0.2s;position:relative;overflow:hidden; }
+.card-btn::before { content:'';position:absolute;inset:0;background:rgba(255,255,255,0.15);opacity:0;transition:opacity 0.2s; }
+.unit-card:hover .card-btn::before { opacity:1; }
+.card-1 .card-btn{background:linear-gradient(135deg,var(--pink2),#ff60b0);color:#fff;box-shadow:0 4px 18px rgba(255,128,192,0.4)}
+.card-2 .card-btn{background:linear-gradient(135deg,var(--blue2),#5ab8d8);color:#fff;box-shadow:0 4px 18px rgba(126,200,227,0.4)}
+.card-3 .card-btn{background:linear-gradient(135deg,var(--lav),#b890e0);color:#fff;box-shadow:0 4px 18px rgba(180,140,220,0.4)}
+.card-4 .card-btn{background:linear-gradient(135deg,var(--mint),#60d8a0);color:#1a0a2e;box-shadow:0 4px 18px rgba(100,220,160,0.4)}
+
+footer { text-align:center;padding:36px 24px;font-family:var(--mono);font-size:12px;color:rgba(255,200,235,0.28);letter-spacing:1.5px;border-top:1px solid rgba(255,179,217,0.1);position:relative;z-index:10; }
+.foot-emojis { font-size:26px;margin-bottom:10px;display:block;animation:footBounce 1s ease-in-out infinite alternate; }
+@keyframes footBounce{0%{transform:translateY(0)}100%{transform:translateY(-7px)}}
+
+.burst { position:fixed;pointer-events:none;z-index:9998;animation:burstUp 0.9s ease-out forwards; }
+@keyframes burstUp{0%{transform:translate(-50%,-50%) scale(0);opacity:1}100%{transform:translate(-50%,-50%) scale(2.2) translateY(-50px);opacity:0}}
+</style>
+</head>
+<body>
+
+<div class="bg-layer"></div>
+<div class="noise"></div>
+<div class="scanlines"></div>
+<div class="emoji-bg" id="emoji-bg"></div>
+<div class="cursor" id="cursor">🍆</div>
+
+<div class="pulse-ring" style="width:280px;height:280px;top:25%;left:18%;border:1px solid rgba(255,128,192,0.12);animation-delay:0s"></div>
+<div class="pulse-ring" style="width:380px;height:380px;top:65%;left:72%;border:1px solid rgba(168,216,240,0.1);animation-delay:1.8s"></div>
+<div class="pulse-ring" style="width:240px;height:240px;top:85%;left:35%;border:1px solid rgba(212,184,240,0.1);animation-delay:3.5s"></div>
+
+<div class="content">
+
+  <header>
+    <div class="logo"><div class="logo-dot"></div>StudyOS 🍆💧</div>
+    <div class="header-badges">
+      <div class="hbadge hp">🌸 ASIR 2025–2027</div>
+      <div class="hbadge hb">💧 ISO · Digitech FP</div>
+      <div class="hbadge hm">🌿 4 UNIDADES</div>
+      <div class="hbadge hy">⚡ XP MODE ON</div>
+    </div>
+  </header>
+
+  <section class="hero">
+    <span class="hero-emoji-big">🍆</span>
+    <h1 class="hero-title">StudyOS</h1>
+    <p class="hero-sub">// ASIR · IMPLANTACIÓN DE SISTEMAS OPERATIVOS · MODO DIOS ACTIVADO 💅</p>
+    <div class="hero-emoji-row">🍆💧🌸💙🌿💜🍑✨🎀🦋🌺💫🎄⭐🌙☁️🍭🦄🌈🫧🔮🪄💖🎊</div>
+  </section>
+
+  <div class="marquee-wrap">
+    <div class="marquee-track" id="marquee">
+      <span>🍆 RAID 0 · SIN TOLERANCIA</span><span>💧 lsblk · df -h · fdisk -l</span>
+      <span>🌸 LVM · PV · VG · LV</span><span>💙 mdadm --create --verbose</span>
+      <span>🌿 /etc/fstab · mount · umount</span><span>💜 RAID 5 · PARIDAD DISTRIBUIDA</span>
+      <span>🍑 MBR vs GPT · parted mklabel</span><span>✨ mkfs.ext4 · wipefs -a</span>
+      <span>🎀 Windows Server · Disk Management</span><span>🦋 RAID 10 · MIRROR + STRIPE</span>
+      <span>🌺 pvcreate · vgcreate · lvcreate</span><span>💫 cat /proc/mdstat · mdadm --detail</span>
+      <span>🍆 RAID 0 · SIN TOLERANCIA</span><span>💧 lsblk · df -h · fdisk -l</span>
+      <span>🌸 LVM · PV · VG · LV</span><span>💙 mdadm --create --verbose</span>
+      <span>🌿 /etc/fstab · mount · umount</span><span>💜 RAID 5 · PARIDAD DISTRIBUIDA</span>
+      <span>🍑 MBR vs GPT · parted mklabel</span><span>✨ mkfs.ext4 · wipefs -a</span>
+      <span>🎀 Windows Server · Disk Management</span><span>🦋 RAID 10 · MIRROR + STRIPE</span>
+      <span>🌺 pvcreate · vgcreate · lvcreate</span><span>💫 cat /proc/mdstat · mdadm --detail</span>
+    </div>
+  </div>
+
+  <section class="units-section">
+    <div class="units-label">// ELIGE TU UNIDAD Y ARRASA 🍆💧</div>
+    <div class="units-grid">
+
+      <a href="unidad1.html" class="unit-card card-1">
+        <div class="card-num">UNIDAD 01 ·· ISO</div>
+        <span class="card-emoji">🌸</span>
+        <div class="card-title">Introducción a los<br>Sistemas Operativos</div>
+        <div class="card-desc">Conceptos básicos, tipos de SO, estructura interna y primeros pasos en la gestión de sistemas.</div>
+        <div class="card-tags"><span class="ctag">Conceptos</span><span class="ctag">Tipos de SO</span><span class="ctag">Estructura</span></div>
+        <div class="card-progress"><div class="prog-label">FLASHCARDS · TEST · RESUMEN · CHAT IA</div><div class="prog-track"><div class="prog-fill" style="width:100%"></div></div></div>
+        <div class="card-footer">
+          <div class="card-stats"><div class="stat">🃏 <span>Flashcards</span></div><div class="stat">📝 <span>Test</span></div><div class="stat">⚡ <span>XP</span></div></div>
+          <button class="card-btn">Estudiar →</button>
+        </div>
+      </a>
+
+      <a href="unidad2.html" class="unit-card card-2">
+        <div class="card-num">UNIDAD 02 ·· ISO</div>
+        <span class="card-emoji">💙</span>
+        <div class="card-title">Instalación y<br>Configuración</div>
+        <div class="card-desc">Instalación de sistemas operativos Windows y Linux, particionado inicial y configuración del entorno.</div>
+        <div class="card-tags"><span class="ctag">Windows</span><span class="ctag">Linux</span><span class="ctag">Instalación</span></div>
+        <div class="card-progress"><div class="prog-label">FLASHCARDS · TEST · RESUMEN · CHAT IA</div><div class="prog-track"><div class="prog-fill" style="width:100%"></div></div></div>
+        <div class="card-footer">
+          <div class="card-stats"><div class="stat">🃏 <span>Flashcards</span></div><div class="stat">📝 <span>Test</span></div><div class="stat">⚡ <span>XP</span></div></div>
+          <button class="card-btn">Estudiar →</button>
+        </div>
+      </a>
+
+      <a href="unidad3.html" class="unit-card card-3">
+        <div class="card-num">UNIDAD 03 ·· ISO</div>
+        <span class="card-emoji">💜</span>
+        <div class="card-title">RAID y Tolerancia<br>a Fallos (Windows)</div>
+        <div class="card-desc">RAID 0/1/5/6/10, paridad XOR, RAID hardware vs software, configuración en Windows Server.</div>
+        <div class="card-tags"><span class="ctag">RAID</span><span class="ctag">Windows Server</span><span class="ctag">Paridad XOR</span><span class="ctag">Mirroring</span></div>
+        <div class="card-progress"><div class="prog-label">22 FLASHCARDS · 10 PREGUNTAS · RESUMEN · CHAT IA</div><div class="prog-track"><div class="prog-fill" style="width:100%"></div></div></div>
+        <div class="card-footer">
+          <div class="card-stats"><div class="stat">🃏 <span>22</span></div><div class="stat">📝 <span>10</span></div><div class="stat">⚡ <span>XP</span></div></div>
+          <button class="card-btn">Estudiar →</button>
+        </div>
+      </a>
+
+      <a href="unidad4.html" class="unit-card card-4">
+        <div class="card-num">UNIDAD 04 ·· ISO</div>
+        <span class="card-emoji">🍆</span>
+        <div class="card-title">Linux · Discos<br>RAID Software · LVM</div>
+        <div class="card-desc">Administración de discos en Linux, particiones con parted, RAID por software con mdadm y LVM.</div>
+        <div class="card-tags"><span class="ctag">parted</span><span class="ctag">mdadm</span><span class="ctag">LVM</span><span class="ctag">/etc/fstab</span><span class="ctag">wipefs</span></div>
+        <div class="card-progress"><div class="prog-label">26 FLASHCARDS · 10 PREGUNTAS · RESUMEN · CHAT IA</div><div class="prog-track"><div class="prog-fill" style="width:100%"></div></div></div>
+        <div class="card-footer">
+          <div class="card-stats"><div class="stat">🃏 <span>26</span></div><div class="stat">📝 <span>10</span></div><div class="stat">⚡ <span>XP</span></div></div>
+          <button class="card-btn">Estudiar →</button>
+        </div>
+      </a>
+
+    </div>
+  </section>
+
+  <footer>
+    <span class="foot-emojis">🍆💧🌸💙💜🌿🍑✨🎀🦋🌺💫⭐🌈🦄🎄🪄🔮</span>
+    StudyOS · ASIR · Implantación de Sistemas Operativos · Digitech FP 2025–2027<br>
+    <span style="color:rgba(255,200,235,0.18);font-size:10px;margin-top:6px;display:block">hecho con 🍆 y mucho 💧 · buena suerte en los exámenes crack 💅</span>
+  </footer>
+
+</div>
+
+<script>
+// ── CURSOR ──
+const cursor = document.getElementById('cursor');
+const CE = ['🍆','💧','🌸','💙','💜','✨','🌿','🍑','🎀','🦋','🌺','💫','⭐','🦄','🌈','🪄','🔮'];
+let ci = 0;
+document.addEventListener('mousemove', e => { cursor.style.left=e.clientX+'px'; cursor.style.top=e.clientY+'px'; });
+setInterval(() => { ci=(ci+1)%CE.length; cursor.textContent=CE[ci]; }, 500);
+
+// ── CLICK BURST ──
+const BE = ['🍆','💧','✨','💥','🌸','💜','⭐','💫','🎉','🦄','🍑','🎊','🌈'];
+document.addEventListener('click', e => {
+  for(let i=0;i<6;i++){
+    const b=document.createElement('div'); b.className='burst';
+    b.style.left=(e.clientX+(Math.random()-.5)*70)+'px';
+    b.style.top=(e.clientY+(Math.random()-.5)*70)+'px';
+    b.style.fontSize=(18+Math.random()*16)+'px';
+    b.textContent=BE[Math.floor(Math.random()*BE.length)];
+    b.style.animationDelay=(Math.random()*.2)+'s';
+    document.body.appendChild(b);
+    setTimeout(()=>b.remove(),1100);
+  }
+});
+
+// ── FLOATING EMOJIS ──
+const FE=['🍆','💧','🌸','💙','💜','🌿','🍑','✨','🎀','🦋','🌺','💫','⭐','🌙','☁️','🍭','🦄','🎄','🎊','💖','🌈','🫧','🪄','🔮','🌟','💅'];
+const ebg=document.getElementById('emoji-bg');
+function spawnFloat(){
+  const el=document.createElement('div'); el.className='float-emoji';
+  el.textContent=FE[Math.floor(Math.random()*FE.length)];
+  el.style.left=Math.random()*100+'vw';
+  el.style.fontSize=(16+Math.random()*26)+'px';
+  const d=7+Math.random()*14;
+  el.style.animationDuration=d+'s';
+  el.style.animationDelay=(Math.random()*3)+'s';
+  ebg.appendChild(el);
+  setTimeout(()=>el.remove(),(d+4)*1000);
+}
+for(let i=0;i<28;i++) setTimeout(spawnFloat,Math.random()*3000);
+setInterval(spawnFloat,500);
+
+// ── STARS ──
+const SE=['✨','⭐','💫','🌟','⚡','💥','🌸','💜'];
+function spawnStar(){
+  const el=document.createElement('div'); el.className='star-particle';
+  el.textContent=SE[Math.floor(Math.random()*SE.length)];
+  el.style.left=Math.random()*100+'vw'; el.style.top=Math.random()*100+'vh';
+  el.style.fontSize=(10+Math.random()*16)+'px';
+  const d=1.5+Math.random()*3;
+  el.style.animationDuration=d+'s'; el.style.animationDelay=(Math.random()*2)+'s';
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(),(d+2.5)*1000);
+}
+for(let i=0;i<18;i++) setTimeout(spawnStar,Math.random()*2500);
+setInterval(spawnStar,350);
+
+// ── CARD HOVER SPARKS ──
+document.querySelectorAll('.unit-card').forEach(card=>{
+  card.addEventListener('mouseenter',()=>{
+    const rect=card.getBoundingClientRect();
+    for(let i=0;i<8;i++){
+      setTimeout(()=>{
+        const b=document.createElement('div'); b.className='burst';
+        b.style.left=(rect.left+Math.random()*rect.width)+'px';
+        b.style.top=(rect.top+Math.random()*rect.height*.6)+'px';
+        b.textContent=['✨','💫','⭐','🌸','💜','💙','🌿','🍆'][Math.floor(Math.random()*8)];
+        b.style.fontSize='15px';
+        document.body.appendChild(b);
+        setTimeout(()=>b.remove(),950);
+      },i*70);
+    }
+  });
+});
+
+// ── KONAMI EASTER EGG ──
+let ks=[];
+const K=[38,38,40,40,37,39,37,39,66,65];
+document.addEventListener('keydown',e=>{
+  ks.push(e.keyCode); if(ks.length>10) ks.shift();
+  if(ks.join(',')==K.join(','))
+    for(let i=0;i<100;i++) setTimeout(()=>{
+      const b=document.createElement('div'); b.className='burst';
+      b.style.left=Math.random()*100+'vw'; b.style.top=Math.random()*100+'vh';
+      b.textContent=['🍆','💧','🌸','💜','⭐','🎄','🦄','🎊','🌈','💅'][Math.floor(Math.random()*10)];
+      b.style.fontSize='36px';
+      document.body.appendChild(b); setTimeout(()=>b.remove(),1600);
+    },i*25);
+});
+</script>
+</body>
+</html>
